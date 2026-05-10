@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TaskGrid — Gestão de Obras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════════════════
+   TASKGRID — Industrial Premium Design System
+   ═══════════════════════════════════════════════════════ */
+
+[data-theme="dark"] {
+  --bg:        #080a0e;
+  --surface:   #0d1018;
+  --raised:    #131720;
+  --float:     #181d28;
+  --overlay:   #1e2433;
+  --b0:        rgba(255,255,255,.04);
+  --b1:        rgba(255,255,255,.07);
+  --b2:        rgba(255,255,255,.13);
+  --b3:        rgba(255,255,255,.22);
+  --tx1:       #f0f4ff;
+  --tx2:       #6b7694;
+  --tx3:       #343d58;
+  --glass:     rgba(8,10,14,.82);
+  --shadow-lg: 0 32px 80px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.05);
+  --shadow-md: 0 8px 36px rgba(0,0,0,.55);
+  --shadow-sm: 0 2px 12px rgba(0,0,0,.4);
+  --chart-grid:rgba(255,255,255,.04);
+  --chart-tick:#484f6a;
+  --grid-line: rgba(255,140,60,.06);
+  --grid-dot:  rgba(255,140,60,.15);
+}
+[data-theme="light"] {
+  --bg:        #f2f4f8;
+  --surface:   #ffffff;
+  --raised:    #eceef5;
+  --float:     #e5e8f2;
+  --overlay:   #dde0ed;
+  --b0:        rgba(0,0,0,.04);
+  --b1:        rgba(0,0,0,.07);
+  --b2:        rgba(0,0,0,.13);
+  --b3:        rgba(0,0,0,.22);
+  --tx1:       #0b0e1a;
+  --tx2:       #3d4868;
+  --tx3:       #8590b0;
+  --glass:     rgba(245,247,252,.88);
+  --shadow-lg: 0 16px 56px rgba(10,14,40,.14), 0 0 0 1px rgba(0,0,0,.07);
+  --shadow-md: 0 4px 22px rgba(10,14,40,.09);
+  --shadow-sm: 0 1px 6px rgba(10,14,40,.07);
+  --chart-grid:rgba(0,0,0,.05);
+  --chart-tick:#6b7694;
+  --grid-line: rgba(200,100,20,.07);
+  --grid-dot:  rgba(200,100,20,.2);
+}
+
+:root {
+  --em:    #ff7c2a;
+  --em2:   #e05a10;
+  --em3:   #c24800;
+  --em-g2: #ffb347;
+  --em-a:  rgba(255,124,42,.08);
+  --em-b:  rgba(255,124,42,.14);
+  --em-c:  rgba(255,124,42,.22);
+  --em-glow: 0 0 32px rgba(255,124,42,.24);
+  --brand-gradient: linear-gradient(135deg, var(--em) 0%, var(--em-g2) 100%);
+  --brand-glow: 0 0 36px rgba(255,124,42,.28);
+
+  --a1: #3b82f6; --a1d: rgba(59,130,246,.1);
+  --a2: #8b5cf6; --a2d: rgba(139,92,246,.1);
+  --a3: #eab308; --a3d: rgba(234,179,8,.1);
+  --a4: #22c55e; --a4d: rgba(34,197,94,.1);
+  --a5: #ef4444; --a5d: rgba(239,68,68,.1);
+  --a6: #f472b6; --a6d: rgba(244,114,182,.1);
+
+  --r:  8px; --r2: 12px; --r3: 16px;
+  --t:  all .18s cubic-bezier(.4,0,.2,1);
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --sidebar-w: 224px;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+html,body { height:100%; overflow:hidden }
+body {
+  font-family: var(--font-body);
+  font-size:13.5px; line-height:1.5;
+  background:var(--bg); color:var(--tx1);
+  display:flex;
+  -webkit-font-smoothing:antialiased;
+}
+svg { fill:none; stroke:currentColor; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; overflow:visible; flex-shrink:0 }
+::-webkit-scrollbar { width:3px; height:3px }
+::-webkit-scrollbar-thumb { background:var(--b2); border-radius:99px }
+
+/* ══ ISOMETRIC GRID BACKGROUND ══ */
+.bg-scene {
+  position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden;
+}
+.bg-scene canvas#grid-canvas {
+  position:absolute; inset:0; width:100%; height:100%;
+}
+.bg-scene::after {
+  content:'';
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 5%, rgba(255,124,42,.055) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 60% at 88% 78%, rgba(59,130,246,.04) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 40% at 60% 30%, rgba(255,179,71,.03) 0%, transparent 45%);
+}
+
+/* ══ TOP ACCENT LINE ══ */
+.top-accent {
+  position:fixed; top:0; left:var(--sidebar-w); right:0; height:2px; z-index:100;
+  background: var(--brand-gradient);
+}
+
+/* ══ BOTTOM TICKER ══ */
+.icon-ticker {
+  position:fixed; bottom:0; left:var(--sidebar-w); right:0; height:34px; z-index:5;
+  overflow:hidden; pointer-events:none;
+  border-top: 1px solid var(--b0);
+  display:flex; align-items:center;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+}
+.icon-ticker-inner {
+  display:flex; align-items:center;
+  animation: tickerScroll 28s linear infinite;
+  white-space:nowrap;
+}
+@keyframes tickerScroll {
+  0%   { transform:translateX(0) }
+  100% { transform:translateX(-50%) }
+}
+.ticker-item {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:0 22px; color:var(--tx3);
+  font-family:var(--font-mono); font-size:9px; letter-spacing:.8px;
+  border-right:1px solid var(--b0); flex-shrink:0;
+}
+.ticker-item svg { width:10px; height:10px }
+.ticker-dot {
+  width:3px; height:3px; border-radius:50%;
+  background: var(--em); opacity:.5;
+  animation: dotPulse 2.4s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%,100% { opacity:.25; transform:scale(1) }
+  50%     { opacity:.9; transform:scale(1.5) }
+}
+
+/* ══ COLOR PANEL ══ */
+.color-panel {
+  position:fixed; bottom:52px; right:18px; z-index:300;
+  background:var(--surface); border:1px solid var(--b2);
+  border-radius:var(--r3); padding:18px;
+  width:244px; box-shadow:var(--shadow-lg);
+  display:none; flex-direction:column; gap:14px;
+  animation:colorPanelIn .2s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes colorPanelIn {
+  from { opacity:0; transform:translateY(10px) scale(.95) }
+  to   { opacity:1; transform:translateY(0) scale(1) }
+}
+.color-panel.open { display:flex }
+.cp-title { font-family:var(--font-mono); font-size:10px; font-weight:500; color:var(--tx2); letter-spacing:.5px; text-transform:uppercase }
+.cp-row { display:flex; flex-direction:column; gap:6px }
+.cp-label { font-size:10.5px; color:var(--tx3); display:flex; align-items:center; justify-content:space-between }
+.cp-label span { font-family:var(--font-mono); font-size:9px; color:var(--tx3) }
+.cp-swatch-row { display:flex; gap:5px; flex-wrap:wrap }
+.cp-swatch {
+  width:22px; height:22px; border-radius:6px; cursor:pointer;
+  border:2px solid transparent; transition:all .15s; flex-shrink:0; position:relative;
+}
+.cp-swatch:hover { transform:scale(1.18) }
+.cp-swatch.active::after {
+  content:''; position:absolute; inset:-3px; border-radius:8px;
+  border:2px solid var(--tx1); pointer-events:none;
+}
+.cp-custom {
+  width:28px; height:22px; border-radius:6px; cursor:pointer;
+  border:1px solid var(--b2); padding:1px; background:var(--raised);
+  transition:transform .15s; flex-shrink:0;
+}
+.cp-custom:hover { transform:scale(1.1) }
+.cp-preview {
+  height:4px; border-radius:3px; width:100%;
+  background: var(--brand-gradient);
+  transition: background 0.4s ease;
+}
+.cp-divider { height:1px; background:var(--b0) }
+.cp-btn-close {
+  background:transparent; border:1px solid var(--b1); border-radius:7px;
+  color:var(--tx3); font-family:var(--font-body); font-size:11px;
+  padding:5px 12px; cursor:pointer; transition:var(--t); align-self:flex-end;
+}
+.cp-btn-close:hover { background:var(--raised); color:var(--tx1) }
+.color-fab {
+  position:fixed; bottom:44px; right:18px; z-index:301;
+  width:30px; height:30px; border-radius:50%;
+  border:none; cursor:pointer;
+  background: var(--brand-gradient);
+  box-shadow: var(--brand-glow);
+  display:flex; align-items:center; justify-content:center;
+  transition:all .22s cubic-bezier(.34,1.56,.64,1);
+}
+.color-fab:hover { transform:scale(1.15) rotate(22deg) }
+.color-fab svg { width:12px; height:12px; stroke:#fff; stroke-width:2 }
+
+/* ══ SIDEBAR ══ */
+.sidebar {
+  position:relative; z-index:20;
+  width:var(--sidebar-w); height:100vh; flex-shrink:0;
+  background:var(--glass);
+  backdrop-filter:blur(32px) saturate(170%);
+  border-right:1px solid var(--b1);
+  display:flex; flex-direction:column;
+  animation:sidebarIn .55s cubic-bezier(.16,1,.3,1) both;
+  padding-bottom:34px;
+}
+@keyframes sidebarIn {
+  from { transform:translateX(-28px); opacity:0 }
+  to   { transform:translateX(0);     opacity:1 }
+}
+
+/* ── BRAND / LOGO ── */
+.brand {
+  padding:22px 16px 18px;
+  border-bottom:1px solid var(--b0);
+  display:flex; align-items:center; gap:12px;
+  position:relative;
+}
+/* The new logo mark — geometric tower/grid icon */
+.brand-mark {
+  width:36px; height:36px; flex-shrink:0;
+  position:relative;
+  display:flex; align-items:center; justify-content:center;
+}
+.brand-mark svg.logo-icon {
+  width:36px; height:36px;
+  stroke:none;
+}
+.brand-mark::before {
+  content:'';
+  position:absolute; inset:-3px;
+  background: var(--brand-gradient);
+  border-radius:11px;
+  opacity:.15;
+  animation:logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%,100% { opacity:.12; transform:scale(1) }
+  50%     { opacity:.22; transform:scale(1.06) }
+}
+
+.brand-text { display:flex; flex-direction:column; gap:1px }
+.brand-name {
+  font-family: var(--font-display);
+  font-size:22px; letter-spacing:1.5px; color:var(--tx1);
+  line-height:1; margin-top:2px;
+}
+.brand-name span {
+  background: var(--brand-gradient);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.brand-sub {
+  font-family:var(--font-mono); font-size:8.5px; color:var(--tx3);
+  letter-spacing:1.2px; text-transform:uppercase;
+}
+
+/* nav */
+.nav-section { padding:14px 10px 0 }
+.nav-label {
+  font-family:var(--font-mono); font-size:8px; font-weight:500;
+  letter-spacing:1.6px; text-transform:uppercase; color:var(--tx3);
+  padding:0 8px 7px;
+}
+.nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:var(--r); margin-bottom:2px;
+  color:var(--tx3); font-size:13px; font-weight:500;
+  cursor:pointer; position:relative; overflow:hidden;
+  transition:color .16s, background .16s;
+}
+.nav-item::before {
+  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%) scaleY(0);
+  width:2.5px; height:20px; border-radius:2px;
+  background: var(--brand-gradient);
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.nav-item.active {
+  color:var(--em); background:var(--em-a);
+}
+.nav-item.active::before { transform:translateY(-50%) scaleY(1) }
+.nav-item:hover:not(.active) { background:var(--b0); color:var(--tx2) }
+.nav-icon {
+  width:30px; height:30px; border-radius:8px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--raised); transition:var(--t);
+}
+.nav-item.active .nav-icon { background:var(--em-a) }
+.nav-icon svg { width:14px; height:14px; transition:transform .22s cubic-bezier(.34,1.56,.64,1) }
+.nav-item:hover .nav-icon svg { transform:scale(1.12) }
+.nav-item span { transition:color .16s }
+.nav-badge {
+  margin-left:auto; min-width:18px; height:18px;
+  background:var(--em); color:#fff;
+  border-radius:6px; font-size:10px; font-weight:600;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:0 5px; font-family:var(--font-mono);
+}
+
+/* sidebar footer */
+.sidebar-footer {
+  margin-top:auto; padding:12px 14px;
+  border-top:1px solid var(--b0);
+}
+.user-row {
+  display:flex; align-items:center; gap:9px;
+}
+.av {
+  width:32px; height:32px; border-radius:9px; flex-shrink:0;
+  background: var(--brand-gradient);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:700; color:#fff; letter-spacing:.5px;
+  font-family:var(--font-mono);
+}
+.u-name { font-size:12.5px; font-weight:600; color:var(--tx1) }
+.u-role { font-size:10px; color:var(--tx3); font-family:var(--font-mono) }
+.theme-btn {
+  margin-left:auto; width:26px; height:26px; border-radius:7px;
+  background:var(--raised); border:1px solid var(--b1);
+  cursor:pointer; font-size:13px; display:flex; align-items:center;
+  justify-content:center; transition:var(--t);
+}
+.theme-btn:hover { transform:rotate(20deg); background:var(--em-a) }
+
+/* ══ MAIN ══ */
+.main {
+  flex:1; display:flex; flex-direction:column;
+  overflow:hidden; position:relative; z-index:10;
+}
+
+/* topbar */
+.topbar {
+  display:flex; align-items:center; gap:10px;
+  padding:0 22px; height:52px; flex-shrink:0;
+  background:var(--glass);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--b0);
+  animation:topbarIn .5s .1s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes topbarIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+.tb-meta { flex:1; display:flex; flex-direction:column }
+.tb-title {
+  font-family:var(--font-display);
+  font-size:20px; letter-spacing:1px; line-height:1; color:var(--tx1);
+}
+.tb-crumb {
+  font-family:var(--font-mono); font-size:9px; color:var(--tx3);
+  letter-spacing:.6px;
+}
+
+/* buttons */
+.btn {
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-body); font-weight:500; font-size:12.5px;
+  border:none; border-radius:var(--r); cursor:pointer;
+  transition:var(--t); white-space:nowrap; letter-spacing:.1px;
+}
+.btn-sm { padding:0 12px; height:31px }
+.btn-primary {
+  background: var(--brand-gradient);
+  color:#fff;
+  box-shadow: 0 2px 12px rgba(255,124,42,.3);
+}
+.btn-primary:hover { box-shadow:0 4px 20px rgba(255,124,42,.45); transform:translateY(-1px) }
+.btn-primary svg { stroke:#fff }
+.btn-ghost {
+  background:var(--raised); border:1px solid var(--b1);
+  color:var(--tx2);
+}
+.btn-ghost:hover { background:var(--float); color:var(--tx1); border-color:var(--b2); transform:translateY(-1px) }
+.btn-danger { background:var(--a5d); border:1px solid rgba(239,68,68,.2); color:var(--a5) }
+.btn-danger:hover { background:rgba(239,68,68,.18) }
+.btn svg { width:12px; height:12px; flex-shrink:0 }
+
+/* content */
+.content {
+  flex:1; overflow-y:auto; padding:22px 22px 52px;
+  animation:contentIn .5s .15s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes contentIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+.page { display:none }
+.page.active {
+  display:block;
+  animation:pageIn .3s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes pageIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* page header */
+.ph {
+  display:flex; align-items:flex-start; justify-content:space-between;
+  margin-bottom:20px; gap:12px;
+}
+.ph-title {
+  font-family:var(--font-display);
+  font-size:28px; letter-spacing:1.5px; color:var(--tx1); line-height:1;
+}
+.ph-sub { font-size:12px; color:var(--tx3); margin-top:4px; font-family:var(--font-mono); letter-spacing:.3px }
+
+/* ── TABS ── */
+.tabs {
+  display:flex; gap:4px; margin-bottom:16px;
+  background:var(--raised); border:1px solid var(--b1);
+  border-radius:var(--r2); padding:4px; width:fit-content;
+}
+.tab {
+  display:flex; align-items:center; gap:7px;
+  padding:6px 14px; border-radius:8px; border:none;
+  background:transparent; color:var(--tx3);
+  font-family:var(--font-body); font-size:12.5px; font-weight:500;
+  cursor:pointer; transition:all .18s; position:relative;
+}
+.tab.active {
+  background:var(--surface); color:var(--em);
+  box-shadow:var(--shadow-sm);
+}
+.tab svg { width:12px; height:12px; flex-shrink:0 }
+.tab-n {
+  background:var(--em-a); color:var(--em);
+  border-radius:5px; font-size:10px; font-weight:600;
+  padding:0 5px; min-width:18px; text-align:center;
+  font-family:var(--font-mono);
+}
+.tab:not(.active) .tab-n { background:var(--b0); color:var(--tx3) }
+
+/* ── SHEET PANELS ── */
+.sp { display:none }
+.sp.active { display:block; animation:pageIn .25s both }
+
+/* ── METRIC CARDS ── */
+.metrics {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px; margin-bottom:16px;
+}
+.mc {
+  background:var(--surface); border:1px solid var(--b1);
+  border-radius:var(--r2); padding:14px;
+  position:relative; overflow:hidden; cursor:default;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1), border-color .16s, box-shadow .22s;
+  animation:cardReveal .4s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes cardReveal { from{opacity:0;transform:translateY(14px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+.mc:hover { transform:translateY(-3px); border-color:var(--b2); box-shadow:var(--shadow-sm) }
+.mc::before { content:''; position:absolute; top:0; left:0; right:0; height:1.5px; opacity:.9 }
+.mc::after  { content:''; position:absolute; width:70px; height:70px; border-radius:50%; top:-22px; right:-22px; opacity:.16; transition:opacity .2s }
+.mc:hover::after { opacity:.28 }
+.mc-em::before { background:var(--brand-gradient) }
+.mc-em::after  { background:radial-gradient(circle,var(--em),transparent) }
+.mc-em .mi { background:var(--em-a) }
+.mc-em .mi svg { stroke:var(--em) }
+.mc-em .mv { color:var(--em) }
+.mc-a1::before { background:linear-gradient(90deg,var(--a1),transparent) }
+.mc-a1::after  { background:radial-gradient(circle,var(--a1),transparent) }
+.mc-a1 .mi { background:var(--a1d) }
+.mc-a1 .mi svg { stroke:var(--a1) }
+.mc-a1 .mv { color:var(--a1) }
+.mc-a2::before { background:linear-gradient(90deg,var(--a2),transparent) }
+.mc-a2::after  { background:radial-gradient(circle,var(--a2),transparent) }
+.mc-a2 .mi { background:var(--a2d) }
+.mc-a2 .mi svg { stroke:var(--a2) }
+.mc-a2 .mv { color:var(--a2) }
+.mc-a3::before { background:linear-gradient(90deg,var(--a3),transparent) }
+.mc-a3::after  { background:radial-gradient(circle,var(--a3),transparent) }
+.mc-a3 .mi { background:var(--a3d) }
+.mc-a3 .mi svg { stroke:var(--a3) }
+.mc-a3 .mv { color:var(--a3) }
+.mc-a4::before { background:linear-gradient(90deg,var(--a4),transparent) }
+.mc-a4::after  { background:radial-gradient(circle,var(--a4),transparent) }
+.mc-a4 .mi { background:var(--a4d) }
+.mc-a4 .mi svg { stroke:var(--a4) }
+.mc-a4 .mv { color:var(--a4) }
+.mc-a5::before { background:linear-gradient(90deg,var(--a5),transparent) }
+.mc-a5::after  { background:radial-gradient(circle,var(--a5),transparent) }
+.mc-a5 .mi { background:var(--a5d) }
+.mc-a5 .mi svg { stroke:var(--a5) }
+.mc-a5 .mv { color:var(--a5) }
+.mi { width:28px; height:28px; border-radius:7px; display:flex; align-items:center; justify-content:center; margin-bottom:10px; position:relative; z-index:1 }
+.mi svg { width:13px; height:13px; transition:transform .25s cubic-bezier(.34,1.56,.64,1) }
+.mc:hover .mi svg { transform:rotate(-12deg) scale(1.1) }
+.ml { font-family:var(--font-mono); font-size:8.5px; letter-spacing:.9px; text-transform:uppercase; color:var(--tx3); margin-bottom:4px; position:relative; z-index:1 }
+.mv { font-family:var(--font-display); font-size:26px; letter-spacing:.5px; line-height:1; position:relative; z-index:1 }
+.ms { font-size:10px; color:var(--tx3); margin-top:3px; position:relative; z-index:1; font-family:var(--font-mono) }
+
+/* ── TABLE ── */
+.tbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px; flex-wrap:wrap }
+.srch {
+  display:flex; align-items:center; gap:7px;
+  background:var(--surface); border:1px solid var(--b1);
+  border-radius:var(--r); padding:0 11px; height:32px;
+  transition:border-color .16s, box-shadow .16s;
+}
+.srch:focus-within { border-color:rgba(255,124,42,.4); box-shadow:0 0 0 3px rgba(255,124,42,.07) }
+.srch svg { width:12px; height:12px; stroke:var(--tx3); flex-shrink:0 }
+.srch input { border:none; background:transparent; outline:none; font-size:12.5px; color:var(--tx1); width:160px; font-family:var(--font-body) }
+.srch input::placeholder { color:var(--tx3) }
+.tr-right { display:flex; gap:6px; flex-wrap:wrap }
+
+.twrap {
+  background:var(--surface); border:1px solid var(--b1); border-radius:var(--r2); overflow:hidden;
+  box-shadow:var(--shadow-sm); animation:tableIn .35s .1s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes tableIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+table { width:100%; border-collapse:collapse; font-size:12.5px }
+thead th {
+  background:var(--raised); color:var(--tx3);
+  font-family:var(--font-mono); font-size:9px; font-weight:500; letter-spacing:.9px; text-transform:uppercase;
+  padding:9px 12px; text-align:left; border-bottom:1px solid var(--b0); white-space:nowrap;
+}
+thead th:first-child { width:34px; text-align:center }
+tbody tr { border-bottom:1px solid var(--b0); transition:background .1s }
+tbody tr:last-child { border-bottom:none }
+tbody tr:hover { background:rgba(255,124,42,.03) }
+td { padding:9.5px 12px; color:var(--tx1); vertical-align:middle }
+td:first-child { text-align:center; color:var(--tx3); font-family:var(--font-mono); font-size:11px }
+.cn { font-weight:600; letter-spacing:-.1px }
+.cm { font-family:var(--font-mono); font-size:11.5px; color:var(--tx2) }
+.cv { font-weight:700; color:var(--a4); font-size:13px }
+.cq { font-family:var(--font-mono); font-size:14px; font-weight:500; color:var(--a1); letter-spacing:-.3px }
+
+.pill { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:600; white-space:nowrap; font-family:var(--font-mono); letter-spacing:.3px }
+.p-em { background:var(--em-a); color:var(--em) }
+.p-a1 { background:var(--a1d); color:var(--a1) }
+.p-a3 { background:var(--a3d); color:var(--a3) }
+
+.pbadge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:2px 8px; border-radius:5px; font-size:10.5px; font-weight:600;
+  background:var(--a5d); color:var(--a5); border:1px solid rgba(239,68,68,.14);
+  cursor:pointer; max-width:108px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+  transition:all .14s;
+}
+.pbadge:hover { background:rgba(239,68,68,.18); transform:scale(1.04) }
+.pbadge svg { width:10px; height:10px; flex-shrink:0 }
+.pnone { color:var(--tx3); font-family:var(--font-mono); font-size:11px }
+
+.ac { display:flex; gap:4px }
+.ab {
+  width:26px; height:26px; border-radius:6px;
+  border:1px solid var(--b1); background:transparent; color:var(--tx3);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:all .14s; flex-shrink:0;
+}
+.ab svg { width:11px; height:11px; transition:transform .2s }
+.ab:hover { background:var(--raised); color:var(--tx1); border-color:rgba(255,124,42,.3); transform:scale(1.1) }
+.ab.del:hover { background:var(--a5d); color:var(--a5); border-color:rgba(239,68,68,.22) }
+
+/* ── ADD FORM ── */
+.af {
+  display:none; background:var(--raised); border-top:1px solid var(--b0);
+  padding:12px 14px; gap:9px; flex-wrap:wrap; align-items:flex-end;
+}
+.af.open { display:flex; animation:afIn .2s cubic-bezier(.16,1,.3,1) both }
+@keyframes afIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+.fg { display:flex; flex-direction:column; gap:4px; flex:1; min-width:95px }
+.fl { font-family:var(--font-mono); font-size:8.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--tx3) }
+.fi,.fs {
+  background:var(--surface); border:1px solid var(--b1);
+  border-radius:8px; padding:0 9px; height:30px; font-size:12.5px; color:var(--tx1);
+  outline:none; transition:border-color .14s, box-shadow .14s; font-family:var(--font-body);
+}
+.fi:focus,.fs:focus { border-color:rgba(255,124,42,.45); box-shadow:0 0 0 3px rgba(255,124,42,.07) }
+.fs option { background:var(--surface) }
+.fa-btns { display:flex; gap:7px; align-items:flex-end }
+
+/* ── EMPTY ── */
+.er td { text-align:center; padding:44px; color:var(--tx3); font-size:12.5px }
+.ei { width:40px; height:40px; border-radius:10px; background:var(--raised); border:1px solid var(--b1); display:flex; align-items:center; justify-content:center; margin:0 auto 10px }
+.ei svg { width:18px; height:18px; stroke:var(--tx3) }
+
+/* ── OVERLAYS ── */
+.ovl {
+  display:none; position:fixed; inset:0;
+  background:rgba(4,5,8,.85); backdrop-filter:blur(14px);
+  z-index:200; align-items:center; justify-content:center;
+}
+.ovl.open { display:flex; animation:ovIn .18s ease both }
+@keyframes ovIn { from{opacity:0} to{opacity:1} }
+.modal {
+  background:var(--surface); border:1px solid var(--b2);
+  border-radius:var(--r3); width:min(520px,95vw); max-height:90vh; overflow-y:auto;
+  box-shadow:var(--shadow-lg);
+  animation:modalIn .22s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(.93) translateY(18px)} to{opacity:1;transform:scale(1) translateY(0)} }
+.mh { display:flex; align-items:center; padding:15px 18px; border-bottom:1px solid var(--b0); gap:10px }
+.mh-ico { width:30px; height:30px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center }
+.mh-ico svg { width:13px; height:13px }
+.mh-title { font-family:var(--font-display); font-size:18px; letter-spacing:.8px; flex:1 }
+.mclose {
+  width:26px; height:26px; border-radius:6px; border:1px solid var(--b1);
+  background:transparent; color:var(--tx3); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all .14s;
+}
+.mclose:hover { background:var(--a5d); color:var(--a5); border-color:rgba(239,68,68,.22); transform:rotate(90deg) }
+.mclose svg { width:11px; height:11px; transition:none }
+.mb { padding:16px 18px }
+.mb label { display:flex; flex-direction:column; gap:4px; font-family:var(--font-mono); font-size:8.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--tx3); margin-bottom:10px }
+.mb .fi { width:100%; height:34px }
+.mf { padding:12px 18px; border-top:1px solid var(--b0); display:flex; gap:7px; justify-content:flex-end }
+
+/* drop zone */
+.dz {
+  border:1.5px dashed var(--b2); border-radius:12px; padding:22px;
+  text-align:center; cursor:pointer; transition:all .18s;
+}
+.dz:hover,.dz.drag { border-color:var(--em); background:var(--em-a) }
+.dz-icon {
+  width:40px; height:40px; border-radius:10px; background:var(--em-a);
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 9px; transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.dz:hover .dz-icon { transform:translateY(-4px) scale(1.1) }
+.dz-icon svg { width:18px; height:18px; stroke:var(--em) }
+.dz p { font-size:12.5px; color:var(--tx2); margin-bottom:3px; font-weight:500 }
+.dz span { font-size:11px; color:var(--tx3) }
+#pfi { display:none }
+.plist { margin-top:8px; display:flex; flex-direction:column; gap:4px }
+.pi {
+  display:flex; align-items:center; gap:8px;
+  background:var(--raised); border:1px solid var(--b1);
+  border-radius:8px; padding:7px 10px; transition:border-color .14s;
+}
+.pi:hover { border-color:var(--b2) }
+.pi-ico { width:26px; height:26px; border-radius:6px; background:var(--a5d); display:flex; align-items:center; justify-content:center; flex-shrink:0 }
+.pi-ico svg { width:12px; height:12px; stroke:var(--a5) }
+.pi-n { flex:1; font-size:12px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.pi-s { font-family:var(--font-mono); font-size:9.5px; color:var(--tx3); white-space:nowrap }
+.pi-acts { display:flex; gap:3px; flex-shrink:0 }
+.pa { width:24px; height:24px; border-radius:5px; border:1px solid var(--b1); background:transparent; color:var(--tx3); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .12s }
+.pa svg { width:10px; height:10px }
+.pa.pv:hover { background:var(--a1d); color:var(--a1); border-color:rgba(59,130,246,.25) }
+.pa.pd:hover { background:var(--a4d); color:var(--a4); border-color:rgba(34,197,94,.25) }
+.pa.pr:hover { background:var(--a5d); color:var(--a5); border-color:rgba(239,68,68,.25) }
+
+/* PDF viewer */
+.pvm {
+  background:var(--surface); border:1px solid var(--b2);
+  border-radius:var(--r3); width:min(900px,96vw); height:90vh;
+  display:flex; flex-direction:column;
+  box-shadow:var(--shadow-lg);
+  animation:modalIn .22s cubic-bezier(.34,1.56,.64,1) both; overflow:hidden;
+}
+.pvm-head { display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--b0); flex-shrink:0 }
+.pvm-title { flex:1; font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.pvm-body { flex:1; overflow:hidden; background:var(--bg) }
+.pvm-body iframe { width:100%; height:100%; border:none; display:block }
+.nopre { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:10px; color:var(--tx3) }
+.nopre svg { width:44px; height:44px; opacity:.25 }
+
+/* ── CHARTS DASHBOARD ── */
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:10px; margin-bottom:18px }
+.kpi {
+  background:var(--surface); border:1px solid var(--b1); border-radius:var(--r2);
+  padding:14px 15px; display:flex; align-items:center; gap:11px;
+  position:relative; overflow:hidden; cursor:default;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1), border-color .16s, box-shadow .22s;
+  animation:cardReveal .4s cubic-bezier(.16,1,.3,1) both;
+}
+.kpi:hover { transform:translateY(-2px); border-color:var(--b2); box-shadow:var(--shadow-sm) }
+.kpi::after { content:''; position:absolute; width:52px; height:52px; border-radius:50%; top:-14px; right:-14px; opacity:.18 }
+.kpi-em::after { background:radial-gradient(circle,var(--em),transparent) }
+.kpi-a1::after { background:radial-gradient(circle,var(--a1),transparent) }
+.kpi-a2::after { background:radial-gradient(circle,var(--a2),transparent) }
+.kpi-a3::after { background:radial-gradient(circle,var(--a3),transparent) }
+.kpi-a4::after { background:radial-gradient(circle,var(--a4),transparent) }
+.kpi-a5::after { background:radial-gradient(circle,var(--a5),transparent) }
+.kpi-ico { width:36px; height:36px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center; position:relative; z-index:1 }
+.kpi-ico svg { width:16px; height:16px; transition:transform .25s cubic-bezier(.34,1.56,.64,1) }
+.kpi:hover .kpi-ico svg { transform:rotate(-12deg) scale(1.1) }
+.kpi-lbl { font-family:var(--font-mono); font-size:8.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--tx3); margin-bottom:3px; position:relative; z-index:1 }
+.kpi-v { font-family:var(--font-display); font-size:22px; letter-spacing:.5px; line-height:1; position:relative; z-index:1 }
+.kpi-s { font-size:10px; color:var(--tx3); margin-top:2px; position:relative; z-index:1; font-family:var(--font-mono) }
+
+.csel-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap }
+.csel {
+  display:flex; align-items:center; gap:7px;
+  background:var(--surface); border:1px solid var(--b1);
+  border-radius:var(--r); padding:0 12px; height:32px;
+}
+.csel svg { width:12px; height:12px; stroke:var(--em); flex-shrink:0 }
+.csel select { background:transparent; border:none; outline:none; color:var(--tx1); font-size:12.5px; cursor:pointer; font-family:var(--font-body); font-weight:500 }
+.csel select option { background:var(--surface) }
+.chint { font-family:var(--font-mono); font-size:10px; color:var(--tx3) }
+
+.cgrid { display:grid; grid-template-columns:1fr 1fr; gap:13px }
+.cc {
+  background:var(--surface); border:1px solid var(--b1); border-radius:var(--r2);
+  padding:17px 19px; position:relative; overflow:hidden;
+  transition:border-color .16s, box-shadow .16s;
+  animation:cardReveal .4s .05s cubic-bezier(.16,1,.3,1) both;
+}
+.cc::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,124,42,.012),transparent 55%); pointer-events:none }
+.cc:hover { border-color:var(--b2); box-shadow:var(--shadow-sm) }
+.cc.wide { grid-column:1/-1 }
+.cc-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:13px }
+.cc-title { font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:6px; letter-spacing:-.1px }
+.cc-title svg { width:12px; height:12px; flex-shrink:0 }
+.cc-sub { font-size:10px; color:var(--tx3); margin-top:2px; font-family:var(--font-mono) }
+.cc-tag {
+  font-family:var(--font-mono); font-size:8.5px; letter-spacing:.5px;
+  padding:2px 7px; border-radius:4px;
+  background:var(--em-a); color:var(--em); border:1px solid rgba(255,124,42,.16); white-space:nowrap;
+}
+.cw { position:relative; height:190px }
+.cw.tall { height:250px }
+.cv-panel { display:none }
+.cv-panel.active { display:grid; animation:pageIn .3s cubic-bezier(.16,1,.3,1) both }
+
+/* ── DOCUMENTS ── */
+.dh { display:flex; align-items:center; justify-content:space-between; margin-bottom:15px; flex-wrap:wrap; gap:10px }
+.dsearch {
+  display:flex; align-items:center; gap:7px;
+  background:var(--surface); border:1px solid var(--b1);
+  border-radius:var(--r); padding:0 11px; height:32px; width:200px;
+  transition:border-color .14s, box-shadow .14s;
+}
+.dsearch:focus-within { border-color:rgba(255,124,42,.4); box-shadow:0 0 0 3px rgba(255,124,42,.07) }
+.dsearch svg { width:12px; height:12px; stroke:var(--tx3); flex-shrink:0 }
+.dsearch input { border:none; background:transparent; outline:none; font-size:12.5px; color:var(--tx1); width:100%; font-family:var(--font-body) }
+.dsearch input::placeholder { color:var(--tx3) }
+.dfilters { display:flex; gap:5px; flex-wrap:wrap }
+.fc {
+  padding:0 12px; height:28px; border-radius:7px; font-size:11.5px; font-weight:500;
+  cursor:pointer; border:1px solid var(--b1); background:transparent; color:var(--tx3);
+  transition:all .14s; font-family:var(--font-body); display:flex; align-items:center;
+}
+.fc:hover { background:var(--raised); color:var(--tx1); transform:translateY(-1px) }
+.fc.on { background:var(--em-a); color:var(--em); border-color:rgba(255,124,42,.25) }
+
+.dgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(225px,1fr)); gap:11px }
+.dcard {
+  background:var(--surface); border:1px solid var(--b1); border-radius:var(--r2);
+  padding:13px; display:flex; flex-direction:column; gap:10px;
+  position:relative; overflow:hidden;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1), border-color .16s, box-shadow .22s;
+  animation:cardReveal .35s cubic-bezier(.16,1,.3,1) both;
+}
+.dcard::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:1.5px;
+  background:var(--brand-gradient); opacity:0; transition:opacity .16s;
+}
+.dcard:hover { transform:translateY(-3px); border-color:var(--b2); box-shadow:var(--shadow-sm) }
+.dcard:hover::after { opacity:1 }
+.dc-top { display:flex; align-items:flex-start; gap:10px }
+.dc-ico { width:36px; height:36px; border-radius:9px; background:var(--a5d); display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:transform .22s cubic-bezier(.34,1.56,.64,1) }
+.dcard:hover .dc-ico { transform:scale(1.1) rotate(-5deg) }
+.dc-ico svg { width:16px; height:16px; stroke:var(--a5) }
+.dc-name { font-size:12.5px; font-weight:600; color:var(--tx1); line-height:1.4; letter-spacing:-.1px; word-break:break-word }
+.dc-meta { font-family:var(--font-mono); font-size:9.5px; color:var(--tx3); margin-top:2px }
+.dc-src { display:inline-flex; padding:2px 7px; border-radius:4px; font-family:var(--font-mono); font-size:8px; letter-spacing:.5px; text-transform:uppercase; margin-top:4px }
+.src-f { background:var(--em-a); color:var(--em); border:1px solid rgba(255,124,42,.16) }
+.src-a { background:var(--a1d); color:var(--a1); border:1px solid rgba(59,130,246,.16) }
+.src-p { background:var(--a3d); color:var(--a3); border:1px solid rgba(234,179,8,.16) }
+.dc-acts { display:flex; gap:6px; border-top:1px solid var(--b0); padding-top:9px; margin-top:auto }
+.dc-acts .btn { flex:1; justify-content:center; font-size:11px; height:26px; padding:0 8px }
+.dempty { grid-column:1/-1; text-align:center; padding:48px; color:var(--tx3) }
+.dempty svg { width:40px; height:40px; opacity:.2; margin-bottom:10px; display:block; margin-left:auto; margin-right:auto }
+
+/* ── TOAST ── */
+.toast {
+  position:fixed; bottom:46px; right:18px;
+  background:var(--surface); border:1px solid var(--b2);
+  border-left:2.5px solid var(--em); border-radius:10px;
+  padding:10px 14px; font-size:12.5px; color:var(--tx1);
+  z-index:999; opacity:0; transform:translateY(10px) scale(.96);
+  transition:all .22s cubic-bezier(.16,1,.3,1); pointer-events:none;
+  box-shadow:var(--shadow-md); display:flex; align-items:center; gap:8px;
+  font-weight:500; max-width:270px; backdrop-filter:blur(14px);
+}
+.toast svg { width:12px; height:12px; stroke:var(--em); flex-shrink:0; transition:none }
+.toast.show { opacity:1; transform:translateY(0) scale(1) }
+.toast.err { border-left-color:var(--a5) }
+.toast.err svg { stroke:var(--a5) }
+
+.placeholder { padding:60px; text-align:center; color:var(--tx3); font-size:13px; opacity:.5 }
+
+/* ── CONFIGURAÇÕES PAGE ── */
+.cfg-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px }
+.cfg-card {
+  background:var(--surface); border:1px solid var(--b1); border-radius:var(--r2);
+  padding:20px; animation:cardReveal .4s cubic-bezier(.16,1,.3,1) both;
+}
+.cfg-card h3 { font-family:var(--font-display); font-size:18px; letter-spacing:.8px; margin-bottom:6px }
+.cfg-card p { font-size:11.5px; color:var(--tx3); margin-bottom:16px }
+.cfg-placeholder {
+  background:var(--raised); border:1px solid var(--b0); border-radius:8px;
+  padding:20px; text-align:center; color:var(--tx3); font-size:11.5px;
+  font-family:var(--font-mono);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width:768px) {
+  :root { --sidebar-w: 60px }
+  .brand-text,.nav-label,.nav-item span:not(.nav-icon),.u-name,.u-role { display:none }
+  .nav-item { justify-content:center; padding:9px }
+  .nav-icon { width:36px; height:36px }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ ISOMETRIC GRID BG ══ -->
+<div class="bg-scene">
+  <canvas id="grid-canvas"></canvas>
+</div>
+
+<div class="top-accent" id="top-accent"></div>
+
+<div class="icon-ticker">
+  <div class="icon-ticker-inner" id="ticker-inner"></div>
+</div>
+
+<!-- ══ COLOR PANEL ══ -->
+<div class="color-panel" id="colorPanel">
+  <div class="cp-title">— Personalizar Marca</div>
+  <div class="cp-row">
+    <div class="cp-label">Cor Principal <span id="cp-hex1-label">#ff7c2a</span></div>
+    <div class="cp-swatch-row" id="swatches1">
+      <div class="cp-swatch active" data-color="#ff7c2a" style="background:#ff7c2a" onclick="setPrimaryColor('#ff7c2a',this)"></div>
+      <div class="cp-swatch" data-color="#00e5c0" style="background:#00e5c0" onclick="setPrimaryColor('#00e5c0',this)"></div>
+      <div class="cp-swatch" data-color="#3b82f6" style="background:#3b82f6" onclick="setPrimaryColor('#3b82f6',this)"></div>
+      <div class="cp-swatch" data-color="#8b5cf6" style="background:#8b5cf6" onclick="setPrimaryColor('#8b5cf6',this)"></div>
+      <div class="cp-swatch" data-color="#f59e0b" style="background:#f59e0b" onclick="setPrimaryColor('#f59e0b',this)"></div>
+      <div class="cp-swatch" data-color="#ef4444" style="background:#ef4444" onclick="setPrimaryColor('#ef4444',this)"></div>
+      <div class="cp-swatch" data-color="#14b8a6" style="background:#14b8a6" onclick="setPrimaryColor('#14b8a6',this)"></div>
+      <div class="cp-swatch" data-color="#f472b6" style="background:#f472b6" onclick="setPrimaryColor('#f472b6',this)"></div>
+      <input type="color" class="cp-custom" value="#ff7c2a" id="customColor1" oninput="setPrimaryColor(this.value,null)">
+    </div>
+  </div>
+  <div class="cp-divider"></div>
+  <div class="cp-row">
+    <div class="cp-label">Cor Secundária <span id="cp-hex2-label">#ffb347</span></div>
+    <div class="cp-swatch-row" id="swatches2">
+      <div class="cp-swatch active" data-color="#ffb347" style="background:#ffb347" onclick="setGradientColor('#ffb347',this)"></div>
+      <div class="cp-swatch" data-color="#00b8e6" style="background:#00b8e6" onclick="setGradientColor('#00b8e6',this)"></div>
+      <div class="cp-swatch" data-color="#0099ff" style="background:#0099ff" onclick="setGradientColor('#0099ff',this)"></div>
+      <div class="cp-swatch" data-color="#a855f7" style="background:#a855f7" onclick="setGradientColor('#a855f7',this)"></div>
+      <div class="cp-swatch" data-color="#22c55e" style="background:#22c55e" onclick="setGradientColor('#22c55e',this)"></div>
+      <div class="cp-swatch" data-color="#f97316" style="background:#f97316" onclick="setGradientColor('#f97316',this)"></div>
+      <div class="cp-swatch" data-color="#ec4899" style="background:#ec4899" onclick="setGradientColor('#ec4899',this)"></div>
+      <div class="cp-swatch" data-color="#facc15" style="background:#facc15" onclick="setGradientColor('#facc15',this)"></div>
+      <input type="color" class="cp-custom" value="#ffb347" id="customColor2" oninput="setGradientColor(this.value,null)">
+    </div>
+  </div>
+  <div class="cp-preview" id="cpPreview"></div>
+  <button class="cp-btn-close" onclick="toggleColorPanel()">Fechar</button>
+</div>
+<button class="color-fab" onclick="toggleColorPanel()" title="Personalizar cores">
+  <svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>
+</button>
+
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">
+      <!-- New logo: stylized TG monogram + construction grid -->
+      <svg class="logo-icon" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="var(--em)"/>
+            <stop offset="100%" stop-color="var(--em-g2)"/>
+          </linearGradient>
+        </defs>
+        <!-- Background rounded square -->
+        <rect width="36" height="36" rx="9" fill="url(#lg1)"/>
+        <!-- Grid lines (construction grid motif) -->
+        <line x1="12" y1="7" x2="12" y2="29" stroke="rgba(0,0,0,.2)" stroke-width="1" stroke-linecap="round"/>
+        <line x1="7" y1="14" x2="29" y2="14" stroke="rgba(0,0,0,.2)" stroke-width="1" stroke-linecap="round"/>
+        <!-- T shape -->
+        <rect x="7" y="8" width="15" height="3.5" rx="1.5" fill="#fff"/>
+        <rect x="11.5" y="11.5" width="3.5" height="10" rx="1.5" fill="#fff"/>
+        <!-- G shape -->
+        <path d="M21 11.5 A7 7 0 1 0 28 18.5 L28 17 L24 17 L24 19 L25.5 19 A4.5 4.5 0 1 1 21 14" stroke="#fff" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <!-- Corner accent dot -->
+        <circle cx="28" cy="28" r="2.2" fill="rgba(255,255,255,.5)"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-name">Task<span>Grid</span></div>
+      <div class="brand-sub">Gestão de Obras</div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Principal</div>
+    <div class="nav-item active" onclick="sp('planilhas',this)">
+      <div class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg></div>
+      Planilhas
+    </div>
+    <div class="nav-item" onclick="sp('graficos',this)">
+      <div class="nav-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="sp('docs',this)">
+      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      Documentos
+      <span class="nav-badge" id="dbadge">0</span>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Sistema</div>
+    <div class="nav-item" onclick="sp('cfg',this)">
+      <div class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div>
+      Configurações
+    </div>
+    <div class="nav-item" onclick="sp('usr',this)">
+      <div class="nav-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      Usuários
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="av">AD</div>
+      <div>
+        <div class="u-name">Administrador</div>
+        <div class="u-role">Gestor Geral</div>
+      </div>
+      <button class="theme-btn" id="tbtn" onclick="toggleTheme()" title="Alternar tema">☀️</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════ MAIN ══════════════════════ -->
+<div class="main">
+  <header class="topbar">
+    <div class="tb-meta">
+      <div class="tb-title" id="tbtitle">Planilhas Inteligentes</div>
+      <div class="tb-crumb" id="tbcrumb">TaskGrid / Planilhas</div>
+    </div>
+    <button class="btn btn-ghost btn-sm">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="addCurrent()">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Novo
+    </button>
+  </header>
+
+  <div class="content">
+
+    <!-- ╔══ PLANILHAS ══╗ -->
+    <div class="page active" id="page-planilhas">
+      <div class="ph">
+        <div>
+          <div class="ph-title">Controle Geral</div>
+          <div class="ph-sub">Forma, Argamassa e Projetos unificados</div>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="swSh('forma',this)">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Forma<span class="tab-n" id="cnt-forma">0</span>
+        </button>
+        <button class="tab" onclick="swSh('argamassa',this)">
+          <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+          Argamassa<span class="tab-n" id="cnt-argamassa">0</span>
+        </button>
+        <button class="tab" onclick="swSh('projetos',this)">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          Projetos<span class="tab-n" id="cnt-projetos">0</span>
+        </button>
+      </div>
+
+      <!-- FORMA -->
+      <div class="sp active" id="sp-forma">
+        <div class="metrics">
+          <div class="mc mc-em"><div class="mi"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div class="ml">Total</div><div class="mv" id="sf-total">0</div><div class="ms">registros</div></div>
+          <div class="mc mc-a1"><div class="mi"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="ml">Pedidos</div><div class="mv" id="sf-ped">0</div><div class="ms">cadastrados</div></div>
+          <div class="mc mc-a2"><div class="mi"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="ml">QTD Total</div><div class="mv" id="sf-qty">0</div><div class="ms">unidades</div></div>
+          <div class="mc mc-a4"><div class="mi"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="ml">Com PDF</div><div class="mv" id="sf-pdf">0</div><div class="ms">anexados</div></div>
+          <div class="mc mc-a3"><div class="mi"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div class="ml">Responsáveis</div><div class="mv" id="sf-resp">0</div><div class="ms">envolvidos</div></div>
+        </div>
+        <div class="tbar">
+          <div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar na forma…" oninput="filt('forma',this.value)"></div>
+          <div class="tr-right">
+            <button class="btn btn-ghost btn-sm"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Filtrar</button>
+            <button class="btn btn-primary btn-sm" onclick="tog('forma')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar</button>
+          </div>
+        </div>
+        <div class="twrap">
+          <table><thead><tr><th>#</th><th>Nome</th><th>Pedido</th><th>QTD</th><th>UF</th><th>Responsável</th><th>Data</th><th>Anexo</th><th>Ações</th></tr></thead><tbody id="tb-forma"></tbody></table>
+          <div class="af" id="af-forma">
+            <div class="fg"><div class="fl">Nome</div><input class="fi" id="ff-n" placeholder="Ex: Pilar P1"></div>
+            <div class="fg"><div class="fl">Pedido</div><input class="fi" id="ff-p" placeholder="PED-001"></div>
+            <div class="fg" style="max-width:72px"><div class="fl">QTD</div><input class="fi" id="ff-q" type="number" placeholder="0" min="0"></div>
+            <div class="fg" style="max-width:85px"><div class="fl">UF</div>
+              <select class="fs" id="ff-uf">
+                <option value="">—</option>
+                <option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option>
+                <option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option>
+                <option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option>
+                <option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+                <option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option>
+                <option>SE</option><option>TO</option>
+              </select>
+            </div>
+            <div class="fg"><div class="fl">Responsável</div><input class="fi" id="ff-r" placeholder="Nome"></div>
+            <div class="fg"><div class="fl">Data</div><input class="fi" id="ff-d" type="date"></div>
+            <div class="fa-btns">
+              <button class="btn btn-primary btn-sm" onclick="addRow('forma')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button>
+              <button class="btn btn-ghost btn-sm" onclick="tog('forma')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ARGAMASSA -->
+      <div class="sp" id="sp-argamassa">
+        <div class="metrics">
+          <div class="mc mc-em"><div class="mi"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div><div class="ml">Total</div><div class="mv" id="sa-total">0</div><div class="ms">registros</div></div>
+          <div class="mc mc-a4"><div class="mi"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="ml">Valor Total</div><div class="mv" id="sa-val" style="font-size:18px;padding-top:2px">R$0</div><div class="ms">somado</div></div>
+          <div class="mc mc-a1"><div class="mi"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="ml">Com PDF</div><div class="mv" id="sa-pdf">0</div><div class="ms">anexados</div></div>
+          <div class="mc mc-a3"><div class="mi"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="ml">Este Mês</div><div class="mv" id="sa-mes">0</div><div class="ms">entradas</div></div>
+        </div>
+        <div class="tbar">
+          <div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar argamassa…" oninput="filt('argamassa',this.value)"></div>
+          <div class="tr-right">
+            <button class="btn btn-ghost btn-sm"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Filtrar</button>
+            <button class="btn btn-primary btn-sm" onclick="tog('argamassa')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar</button>
+          </div>
+        </div>
+        <div class="twrap">
+          <table><thead><tr><th>#</th><th>Nome</th><th>Valor (R$)</th><th>Data</th><th>Anexo</th><th>Ações</th></tr></thead><tbody id="tb-argamassa"></tbody></table>
+          <div class="af" id="af-argamassa">
+            <div class="fg"><div class="fl">Nome</div><input class="fi" id="fa-n" placeholder="Ex: ARG-01"></div>
+            <div class="fg"><div class="fl">Valor (R$)</div><input class="fi" id="fa-v" type="number" placeholder="0,00" step="0.01"></div>
+            <div class="fg"><div class="fl">Data</div><input class="fi" id="fa-d" type="date"></div>
+            <div class="fa-btns">
+              <button class="btn btn-primary btn-sm" onclick="addRow('argamassa')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button>
+              <button class="btn btn-ghost btn-sm" onclick="tog('argamassa')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROJETOS -->
+      <div class="sp" id="sp-projetos">
+        <div class="metrics">
+          <div class="mc mc-em"><div class="mi"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div><div class="ml">Total</div><div class="mv" id="sp-total">0</div><div class="ms">projetos</div></div>
+          <div class="mc mc-a4"><div class="mi"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="ml">Valor Total</div><div class="mv" id="sp-val" style="font-size:18px;padding-top:2px">R$0</div><div class="ms">carteira</div></div>
+          <div class="mc mc-a1"><div class="mi"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="ml">Com PDF</div><div class="mv" id="sp-pdf">0</div><div class="ms">anexados</div></div>
+          <div class="mc mc-a3"><div class="mi"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><div class="ml">Pedidos</div><div class="mv" id="sp-ped">0</div><div class="ms">registrados</div></div>
+        </div>
+        <div class="tbar">
+          <div class="srch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar projeto…" oninput="filt('projetos',this.value)"></div>
+          <div class="tr-right">
+            <button class="btn btn-ghost btn-sm"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>Filtrar</button>
+            <button class="btn btn-primary btn-sm" onclick="tog('projetos')"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adicionar</button>
+          </div>
+        </div>
+        <div class="twrap">
+          <table><thead><tr><th>#</th><th>Nome</th><th>Nº Pedido</th><th>Valor (R$)</th><th>Data</th><th>Anexo</th><th>Ações</th></tr></thead><tbody id="tb-projetos"></tbody></table>
+          <div class="af" id="af-projetos">
+            <div class="fg"><div class="fl">Nome</div><input class="fi" id="fp-n" placeholder="Ex: Res. Alameda"></div>
+            <div class="fg"><div class="fl">Nº Pedido</div><input class="fi" id="fp-p" placeholder="OS-2025-001"></div>
+            <div class="fg"><div class="fl">Valor (R$)</div><input class="fi" id="fp-v" type="number" placeholder="0,00" step="0.01"></div>
+            <div class="fg"><div class="fl">Data</div><input class="fi" id="fp-d" type="date"></div>
+            <div class="fa-btns">
+              <button class="btn btn-primary btn-sm" onclick="addRow('projetos')"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button>
+              <button class="btn btn-ghost btn-sm" onclick="tog('projetos')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ╔══ DASHBOARD ══╗ -->
+    <div class="page" id="page-graficos">
+      <div class="ph">
+        <div><div class="ph-title">Dashboard</div><div class="ph-sub">Análises interativas — clique nas legendas para filtrar</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="refreshCharts()"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Atualizar</button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi kpi-em"><div class="kpi-ico" style="background:var(--em-a)"><svg viewBox="0 0 24 24" style="stroke:var(--em)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div><div class="kpi-lbl">Total</div><div class="kpi-v" style="color:var(--em)" id="k-total">0</div><div class="kpi-s">registros</div></div></div>
+        <div class="kpi kpi-a4"><div class="kpi-ico" style="background:var(--a4d)"><svg viewBox="0 0 24 24" style="stroke:var(--a4)"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div><div><div class="kpi-lbl">Valor Projetos</div><div class="kpi-v" style="color:var(--a4);font-size:18px;padding-top:2px" id="k-vproj">R$0</div><div class="kpi-s">carteira</div></div></div>
+        <div class="kpi kpi-a1"><div class="kpi-ico" style="background:var(--a1d)"><svg viewBox="0 0 24 24" style="stroke:var(--a1)"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div><div><div class="kpi-lbl">Valor Argamassa</div><div class="kpi-v" style="color:var(--a1);font-size:18px;padding-top:2px" id="k-varg">R$0</div><div class="kpi-s">custo</div></div></div>
+        <div class="kpi kpi-a2"><div class="kpi-ico" style="background:var(--a2d)"><svg viewBox="0 0 24 24" style="stroke:var(--a2)"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div><div><div class="kpi-lbl">QTD Forma</div><div class="kpi-v" style="color:var(--a2)" id="k-qty">0</div><div class="kpi-s">unidades</div></div></div>
+        <div class="kpi kpi-a3"><div class="kpi-ico" style="background:var(--a3d)"><svg viewBox="0 0 24 24" style="stroke:var(--a3)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="kpi-lbl">PDFs</div><div class="kpi-v" style="color:var(--a3)" id="k-pdf">0</div><div class="kpi-s">arquivos</div></div></div>
+        <div class="kpi kpi-a5"><div class="kpi-ico" style="background:var(--a5d)"><svg viewBox="0 0 24 24" style="stroke:var(--a5)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="kpi-lbl">Total Custos</div><div class="kpi-v" style="color:var(--a5);font-size:18px;padding-top:2px" id="k-vtot">R$0</div><div class="kpi-s">proj+arg</div></div></div>
+      </div>
+      <div class="csel-row">
+        <div class="csel">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <select id="csel" onchange="setV(this.value)">
+            <option value="ov">Visão Geral</option>
+            <option value="fm">Análise de Forma</option>
+            <option value="fi">Análise Financeira</option>
+            <option value="tm">Linha do Tempo</option>
+          </select>
+        </div>
+        <span class="chint">— clique nas legendas para ocultar séries</span>
+      </div>
+      <div class="cv-panel active cgrid" id="cv-ov">
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--em)"><svg viewBox="0 0 24 24" style="stroke:var(--em)"><rect x="2" y="7" width="4" height="15"/><rect x="10" y="3" width="4" height="19"/><rect x="18" y="11" width="4" height="11"/></svg>Registros por Módulo</div><div class="cc-sub">Distribuição total</div></div><span class="cc-tag">Barras</span></div><div class="cw"><canvas id="ch-dist"></canvas></div></div>
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--a2)"><svg viewBox="0 0 24 24" style="stroke:var(--a2)"><circle cx="12" cy="12" r="10"/></svg>Proporção</div><div class="cc-sub">% de cada módulo</div></div><span class="cc-tag">Rosca</span></div><div class="cw"><canvas id="ch-prop"></canvas></div></div>
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--a1)"><svg viewBox="0 0 24 24" style="stroke:var(--a1)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>PDFs por Módulo</div><div class="cc-sub">Cobertura documental</div></div><span class="cc-tag">Polar</span></div><div class="cw"><canvas id="ch-polar"></canvas></div></div>
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--a4)"><svg viewBox="0 0 24 24" style="stroke:var(--a4)"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>Projetos vs Argamassa</div><div class="cc-sub">Valores separados</div></div><span class="cc-tag">Barras</span></div><div class="cw"><canvas id="ch-fin2"></canvas></div></div>
+      </div>
+      <div class="cv-panel cgrid" id="cv-fm">
+        <div class="cc wide"><div class="cc-head"><div><div class="cc-title" style="color:var(--em)"><svg viewBox="0 0 24 24" style="stroke:var(--em)"><rect x="2" y="7" width="4" height="15"/><rect x="10" y="3" width="4" height="19"/><rect x="18" y="11" width="4" height="11"/></svg>QTD por Registro</div><div class="cc-sub">Quantidade de cada item</div></div><span class="cc-tag">Horizontal</span></div><div class="cw tall"><canvas id="ch-fqty"></canvas></div></div>
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--a3)"><svg viewBox="0 0 24 24" style="stroke:var(--a3)"><circle cx="12" cy="12" r="10"/></svg>UF — Distribuição</div><div class="cc-sub">Estados da federação</div></div><span class="cc-tag">Pizza</span></div><div class="cw"><canvas id="ch-fuf"></canvas></div></div>
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--a2)"><svg viewBox="0 0 24 24" style="stroke:var(--a2)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>QTD por Responsável</div><div class="cc-sub">Carga por pessoa</div></div><span class="cc-tag">Barras</span></div><div class="cw"><canvas id="ch-fresp"></canvas></div></div>
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--a1)"><svg viewBox="0 0 24 24" style="stroke:var(--a1)"><path d="M9 11l3 3L22 4"/></svg>Pedidos Vinculados</div><div class="cc-sub">Com vs sem pedido</div></div><span class="cc-tag">Rosca</span></div><div class="cw"><canvas id="ch-fped"></canvas></div></div>
+      </div>
+      <div class="cv-panel cgrid" id="cv-fi">
+        <div class="cc wide"><div class="cc-head"><div><div class="cc-title" style="color:var(--a4)"><svg viewBox="0 0 24 24" style="stroke:var(--a4)"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>Valor por Projeto</div><div class="cc-sub">Comparativo de valores</div></div><span class="cc-tag">Barras</span></div><div class="cw tall"><canvas id="ch-pval"></canvas></div></div>
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--a3)"><svg viewBox="0 0 24 24" style="stroke:var(--a3)"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Custo Argamassa</div><div class="cc-sub">Distribuição por item</div></div><span class="cc-tag">Pizza</span></div><div class="cw"><canvas id="ch-aval"></canvas></div></div>
+        <div class="cc"><div class="cc-head"><div><div class="cc-title" style="color:var(--a1)"><svg viewBox="0 0 24 24" style="stroke:var(--a1)"><circle cx="12" cy="12" r="10"/></svg>Projetos vs Argamassa</div><div class="cc-sub">Participação no custo</div></div><span class="cc-tag">Rosca</span></div><div class="cw"><canvas id="ch-cmod"></canvas></div></div>
+      </div>
+      <div class="cv-panel cgrid" id="cv-tm">
+        <div class="cc wide"><div class="cc-head"><div><div class="cc-title" style="color:var(--em)"><svg viewBox="0 0 24 24" style="stroke:var(--em)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Linha do Tempo</div><div class="cc-sub">Registros por mês em todos os módulos</div></div><span class="cc-tag">Linha</span></div><div class="cw tall"><canvas id="ch-tline"></canvas></div></div>
+        <div class="cc wide"><div class="cc-head"><div><div class="cc-title" style="color:var(--a3)"><svg viewBox="0 0 24 24" style="stroke:var(--a3)"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Atividade Mensal</div><div class="cc-sub">Barras agrupadas por módulo</div></div><span class="cc-tag">Barras</span></div><div class="cw"><canvas id="ch-tbar"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- ╔══ DOCUMENTOS ══╗ -->
+    <div class="page" id="page-docs">
+      <div class="ph"><div><div class="ph-title">Documentos</div><div class="ph-sub">Todos os PDFs anexados aos registros</div></div></div>
+      <div class="dh">
+        <div class="dsearch"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Buscar…" id="dsq" oninput="renderDocs()"></div>
+        <div class="dfilters">
+          <button class="fc on" onclick="setDF('all',this)">Todos</button>
+          <button class="fc" onclick="setDF('forma',this)">Forma</button>
+          <button class="fc" onclick="setDF('argamassa',this)">Argamassa</button>
+          <button class="fc" onclick="setDF('projetos',this)">Projetos</button>
+        </div>
+      </div>
+      <div class="dgrid" id="dgrid"></div>
+    </div>
+
+    <!-- ╔══ CONFIGURAÇÕES ══╗ -->
+    <div class="page" id="page-cfg">
+      <div class="ph"><div><div class="ph-title">Configurações</div><div class="ph-sub">Preferências do sistema</div></div></div>
+      <div class="cfg-grid">
+        <div class="cfg-card">
+          <h3>🎨 Aparência</h3>
+          <p>Personalize as cores e o tema do sistema usando o botão flutuante no canto inferior direito.</p>
+          <div class="cfg-placeholder">Use o botão <strong>●</strong> para abrir o seletor de cores</div>
+        </div>
+        <div class="cfg-card">
+          <h3>🔔 Notificações</h3>
+          <p>Alertas e lembretes do sistema</p>
+          <div class="cfg-placeholder">Em breve — v2.0</div>
+        </div>
+        <div class="cfg-card">
+          <h3>💾 Backup</h3>
+          <p>Exportação e sincronização de dados</p>
+          <div class="cfg-placeholder">Em breve — v2.0</div>
+        </div>
+        <div class="cfg-card">
+          <h3>🔗 Integrações</h3>
+          <p>Conecte com APIs externas</p>
+          <div class="cfg-placeholder">Em breve — v2.0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-usr"><div class="placeholder">👥 Usuários em breve</div></div>
+  </div>
+</div>
+
+<!-- ╔══ MODAL: PDFs ══╗ -->
+<div class="ovl" id="pov">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-ico" style="background:var(--a5d)"><svg viewBox="0 0 24 24" style="stroke:var(--a5)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <span class="mh-title" id="pt">Gerenciar PDFs</span>
+      <button class="mclose" onclick="closePM()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb">
+      <div class="dz" id="dzz" onclick="document.getElementById('pfi').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="hDrop(event)">
+        <div class="dz-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <p>Clique ou arraste PDFs aqui</p><span>Apenas .pdf</span>
+      </div>
+      <input type="file" id="pfi" accept=".pdf" multiple onchange="hFile(this.files)">
+      <div class="plist" id="pl"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost btn-sm" onclick="closePM()">Fechar</button>
+      <button class="btn btn-primary btn-sm" onclick="savePdfs()"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══ MODAL: EDITAR ══╗ -->
+<div class="ovl" id="eov">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-ico" style="background:var(--em-a)"><svg viewBox="0 0 24 24" style="stroke:var(--em)"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></div>
+      <span class="mh-title">Editar Registro</span>
+      <button class="mclose" onclick="closeEM()"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="mb" id="emb"></div>
+    <div class="mf">
+      <button class="btn btn-danger btn-sm" id="edelbtn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Excluir</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeEM()">Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="saveEdit()"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══ PDF VIEWER ══╗ -->
+<div class="ovl" id="vov">
+  <div class="pvm">
+    <div class="pvm-head">
+      <div class="mh-ico" style="background:var(--a5d);margin-right:10px;flex-shrink:0"><svg viewBox="0 0 24 24" style="stroke:var(--a5)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <span class="pvm-title" id="vtitle">—</span>
+      <button class="btn btn-ghost btn-sm" onclick="dlCur()"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Baixar</button>
+      <button class="mclose" onclick="closeV()" style="margin-left:6px"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="pvm-body" id="vbody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="tmsg"></span>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  TASKGRID — Isometric Grid Background
+// ══════════════════════════════════════════════════════
+(function initGrid(){
+  const canvas=document.getElementById('grid-canvas');
+  const ctx=canvas.getContext('2d');
+  let W,H,animFrame;
+
+  function getColors(){
+    const dark=document.documentElement.getAttribute('data-theme')==='dark';
+    return{
+      line: dark?'rgba(255,124,42,.05)':'rgba(180,80,10,.06)',
+      dot:  dark?'rgba(255,124,42,.18)':'rgba(180,80,10,.22)',
+      fade1:dark?'rgba(255,124,42,.025)':'rgba(180,80,10,.03)',
+    };
+  }
+
+  function resize(){
+    W=canvas.width=window.innerWidth;
+    H=canvas.height=window.innerHeight;
+  }
+
+  let t=0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    const c=getColors();
+    const size=52;
+    const cols=Math.ceil(W/size)+2;
+    const rows=Math.ceil(H/size)+2;
+
+    // Animated subtle wave offset
+    const wave=Math.sin(t*.0004)*4;
+
+    ctx.lineWidth=.7;
+    ctx.strokeStyle=c.line;
+
+    // Vertical lines
+    for(let i=0;i<cols;i++){
+      const x=i*size+wave;
+      ctx.beginPath();
+      ctx.moveTo(x,0);
+      ctx.lineTo(x,H);
+      ctx.stroke();
+    }
+    // Horizontal lines
+    for(let j=0;j<rows;j++){
+      const y=j*size+(wave*.5);
+      ctx.beginPath();
+      ctx.moveTo(0,y);
+      ctx.lineTo(W,y);
+      ctx.stroke();
+    }
+
+    // Animated dots at intersections (sparse)
+    ctx.fillStyle=c.dot;
+    for(let i=0;i<cols;i+=3){
+      for(let j=0;j<rows;j+=3){
+        const x=i*size+wave;
+        const y=j*size+wave*.5;
+        const pulse=Math.sin(t*.002+i*.4+j*.3)*.5+.5;
+        ctx.globalAlpha=pulse*.25+.05;
+        ctx.beginPath();
+        ctx.arc(x,y,1.5,0,Math.PI*2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha=1;
+
+    // Large decorative cross-hairs at a few spots
+    ctx.strokeStyle=c.fade1;
+    ctx.lineWidth=.4;
+    [[W*.15,H*.2],[W*.72,H*.55],[W*.45,H*.82]].forEach(([cx,cy])=>{
+      const r=60+Math.sin(t*.0008+cx)*(8);
+      ctx.beginPath();
+      ctx.moveTo(cx-r,cy); ctx.lineTo(cx+r,cy);
+      ctx.moveTo(cx,cy-r); ctx.lineTo(cx,cy+r);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(cx,cy,r*.28,0,Math.PI*2);
+      ctx.stroke();
+    });
+
+    t++;
+    animFrame=requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize',resize);
+  resize();
+  draw();
+  // Store stop fn
+  window._stopGrid=()=>cancelAnimationFrame(animFrame);
+  window._restartGrid=()=>{cancelAnimationFrame(animFrame);draw()};
+})();
+
+// ══════════════════════════════════════════════════════
+//  TASKGRID — Core Logic (all functionality preserved)
+// ══════════════════════════════════════════════════════
+
+const db={forma:[],argamassa:[],projetos:[]};
+let cpS=null,cpId=null,ceS=null,ceId=null,pPdfs=[],cvPdf=null,dFilt='all';
+const CH={};
+const UF_LIST=['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+// ── COLOR ENGINE ──
+let currentColor1='#ff7c2a';
+let currentColor2='#ffb347';
+
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return{r,g,b};
+}
+function applyBrandColors(c1,c2){
+  const root=document.documentElement;
+  const rgb1=hexToRgb(c1);
+  root.style.setProperty('--em',c1);
+  root.style.setProperty('--em2',`color-mix(in srgb, ${c1} 85%, #000)`);
+  root.style.setProperty('--em3',`color-mix(in srgb, ${c1} 70%, #000)`);
+  root.style.setProperty('--em-g2',c2);
+  root.style.setProperty('--em-a',`rgba(${rgb1.r},${rgb1.g},${rgb1.b},.08)`);
+  root.style.setProperty('--em-b',`rgba(${rgb1.r},${rgb1.g},${rgb1.b},.14)`);
+  root.style.setProperty('--em-c',`rgba(${rgb1.r},${rgb1.g},${rgb1.b},.22)`);
+  root.style.setProperty('--em-glow',`0 0 32px rgba(${rgb1.r},${rgb1.g},${rgb1.b},.24)`);
+  root.style.setProperty('--brand-gradient',`linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`);
+  root.style.setProperty('--brand-glow',`0 0 36px rgba(${rgb1.r},${rgb1.g},${rgb1.b},.28)`);
+  // Update logo gradient
+  const lg=document.getElementById('lg1');
+  if(lg){lg.querySelectorAll('stop')[0].style.stopColor=c1;lg.querySelectorAll('stop')[1].style.stopColor=c2}
+  const prev=document.getElementById('cpPreview');
+  if(prev) prev.style.background=`linear-gradient(90deg, ${c1}, ${c2})`;
+  const pg=document.getElementById('page-graficos');
+  if(pg?.classList.contains('active')) setTimeout(refreshCharts,80);
+}
+function setPrimaryColor(hex,el){
+  currentColor1=hex;
+  document.getElementById('cp-hex1-label').textContent=hex;
+  document.getElementById('customColor1').value=hex;
+  if(el){
+    document.querySelectorAll('#swatches1 .cp-swatch').forEach(s=>s.classList.remove('active'));
+    el.classList.add('active');
+  }
+  applyBrandColors(currentColor1,currentColor2);
+}
+function setGradientColor(hex,el){
+  currentColor2=hex;
+  document.getElementById('cp-hex2-label').textContent=hex;
+  document.getElementById('customColor2').value=hex;
+  if(el){
+    document.querySelectorAll('#swatches2 .cp-swatch').forEach(s=>s.classList.remove('active'));
+    el.classList.add('active');
+  }
+  applyBrandColors(currentColor1,currentColor2);
+}
+function toggleColorPanel(){
+  document.getElementById('colorPanel').classList.toggle('open');
+}
+document.addEventListener('click',e=>{
+  const panel=document.getElementById('colorPanel');
+  const fab=document.querySelector('.color-fab');
+  if(!panel.contains(e.target)&&!fab.contains(e.target)){
+    panel.classList.remove('open');
+  }
+});
+
+// ── ICON TICKER ──
+const TICKER_ICONS=[
+  {icon:'<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>',label:'PLANILHAS'},
+  {icon:'<svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>',label:'ANÁLISES'},
+  {icon:'<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',label:'DOCUMENTOS'},
+  {icon:'<svg viewBox="0 0 24 24"><rect x="2" y="7" width="4" height="15"/><rect x="10" y="3" width="4" height="19"/><rect x="18" y="11" width="4" height="11"/></svg>',label:'MÉTRICAS'},
+  {icon:'<svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',label:'PROJETOS'},
+  {icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',label:'TEMPO REAL'},
+  {icon:'<svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',label:'ARGAMASSA'},
+  {icon:'<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',label:'EQUIPE'},
+  {icon:'<svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',label:'FINANCEIRO'},
+  {icon:'<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/></svg>',label:'APROVAÇÕES'},
+  {icon:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',label:'AGENDA'},
+  {icon:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>',label:'SISTEMA'},
+];
+function buildTicker(){
+  const inner=document.getElementById('ticker-inner');
+  const items=[...TICKER_ICONS,...TICKER_ICONS,...TICKER_ICONS];
+  inner.innerHTML=items.map((t,i)=>`
+    <div class="ticker-item">
+      <div class="ticker-dot" style="animation-delay:${i*0.3}s"></div>
+      ${t.icon}
+      ${t.label}
+    </div>
+  `).join('');
+}
+buildTicker();
+
+// ── THEME ──
+function toggleTheme(){
+  const h=document.documentElement,d=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',d?'light':'dark');
+  document.getElementById('tbtn').textContent=d?'🌙':'☀️';
+  if(document.getElementById('page-graficos').classList.contains('active'))setTimeout(refreshCharts,50);
+}
+
+// ── NAV ──
+const TITLES={planilhas:'Planilhas Inteligentes',graficos:'Dashboard',docs:'Documentos',cfg:'Configurações',usr:'Usuários'};
+function sp(pg,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+pg).classList.add('active');
+  el.classList.add('active');
+  document.getElementById('tbtitle').textContent=TITLES[pg]||pg;
+  document.getElementById('tbcrumb').textContent='TaskGrid / '+(TITLES[pg]||pg);
+  if(pg==='graficos')setTimeout(refreshCharts,60);
+  if(pg==='docs')renderDocs();
+}
+function swSh(n,btn){
+  document.querySelectorAll('.sp').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sp-'+n).classList.add('active');
+  btn.classList.add('active');
+}
+function tog(s){document.getElementById('af-'+s).classList.toggle('open')}
+
+// ── ADD ROW ──
+function addRow(s){
+  const r={id:Date.now(),pdfs:[]};
+  const g=id=>document.getElementById(id)?.value.trim()||'';
+  const clr=ids=>ids.forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});
+  if(s==='forma'){
+    if(!g('ff-n')){toast('Informe o nome!',1);return}
+    r.nome=g('ff-n');r.pedido=g('ff-p')||'—';r.qty=parseInt(g('ff-q'))||0;
+    r.uf=g('ff-uf')||'—';r.resp=g('ff-r')||'—';r.data=g('ff-d');
+    clr(['ff-n','ff-p','ff-q','ff-r','ff-d']);document.getElementById('ff-uf').value='';
+  }else if(s==='argamassa'){
+    if(!g('fa-n')){toast('Informe o nome!',1);return}
+    r.nome=g('fa-n');r.valor=parseFloat(g('fa-v'))||0;r.data=g('fa-d');
+    clr(['fa-n','fa-v','fa-d']);
+  }else{
+    if(!g('fp-n')){toast('Informe o nome!',1);return}
+    r.nome=g('fp-n');r.pedido=g('fp-p')||'—';r.valor=parseFloat(g('fp-v'))||0;r.data=g('fp-d');
+    clr(['fp-n','fp-p','fp-v','fp-d']);
+  }
+  db[s].push(r);tog(s);render(s);updStats(s);updBadge();toast('Registro adicionado!');
+}
+
+// ── RENDER ──
+const fD=d=>{if(!d)return'—';const[y,m,dd]=d.split('-');return`${dd}/${m}/${y}`};
+const fV=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2});
+const fS=v=>v>=1e6?'R$'+(v/1e6).toFixed(1)+'M':v>=1e3?'R$'+(v/1e3).toFixed(0)+'k':'R$'+v.toFixed(0);
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function pBadge(r,s){
+  if(!r.pdfs?.length)return'<span class="pnone">—</span>';
+  const n=r.pdfs[0].name,sh=n.length>11?n.slice(0,11)+'…':n,m=r.pdfs.length>1?` +${r.pdfs.length-1}`:'';
+  return`<span class="pbadge" onclick="openPM('${s}','${r.id}')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${esc(sh)}${m}</span>`;
+}
+function rowActs(s,id){
+  return`<div class="ac">
+    <button class="ab" title="PDFs" onclick="openPM('${s}','${id}')"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></button>
+    <button class="ab" title="Editar" onclick="openEM('${s}','${id}')"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+    <button class="ab del" title="Excluir" onclick="delRow('${s}','${id}')"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
+  </div>`;
+}
+function buildRow(s,r,i){
+  if(s==='forma')return`<tr><td>${i}</td><td class="cn">${esc(r.nome)}</td><td class="cm">${esc(r.pedido)}</td><td class="cq">${r.qty||0}</td><td>${r.uf&&r.uf!=='—'?`<span class="pill p-em">${esc(r.uf)}</span>`:'<span class="pnone">—</span>'}</td><td>${esc(r.resp)}</td><td class="cm">${fD(r.data)}</td><td>${pBadge(r,s)}</td><td>${rowActs(s,r.id)}</td></tr>`;
+  if(s==='argamassa')return`<tr><td>${i}</td><td class="cn">${esc(r.nome)}</td><td class="cv">${fV(r.valor)}</td><td class="cm">${fD(r.data)}</td><td>${pBadge(r,s)}</td><td>${rowActs(s,r.id)}</td></tr>`;
+  return`<tr><td>${i}</td><td class="cn">${esc(r.nome)}</td><td class="cm">${esc(r.pedido)}</td><td class="cv">${fV(r.valor)}</td><td class="cm">${fD(r.data)}</td><td>${pBadge(r,s)}</td><td>${rowActs(s,r.id)}</td></tr>`;
+}
+function render(s){
+  const tb=document.getElementById('tb-'+s);
+  document.getElementById('cnt-'+s).textContent=db[s].length;
+  const cols={forma:9,argamassa:6,projetos:7}[s];
+  if(!db[s].length){tb.innerHTML=`<tr class="er"><td colspan="${cols}"><div class="ei"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>Nenhum registro. Clique em Adicionar.</td></tr>`;return}
+  tb.innerHTML=db[s].map((r,i)=>buildRow(s,r,i+1)).join('');
+}
+
+// ── STATS ──
+const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+function updStats(s){
+  const rows=db[s],wp=rows.filter(r=>r.pdfs?.length).length;
+  const now=new Date(),mes=rows.filter(r=>{if(!r.data)return false;const d=new Date(r.data);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()}).length;
+  if(s==='forma'){setEl('sf-total',rows.length);setEl('sf-ped',rows.filter(r=>r.pedido&&r.pedido!=='—').length);setEl('sf-qty',rows.reduce((a,r)=>a+(r.qty||0),0));setEl('sf-pdf',wp);setEl('sf-resp',new Set(rows.map(r=>r.resp).filter(r=>r&&r!=='—')).size)}
+  else if(s==='argamassa'){setEl('sa-total',rows.length);setEl('sa-val',fV(rows.reduce((a,r)=>a+(r.valor||0),0)));setEl('sa-pdf',wp);setEl('sa-mes',mes)}
+  else{setEl('sp-total',rows.length);setEl('sp-val',fV(rows.reduce((a,r)=>a+(r.valor||0),0)));setEl('sp-pdf',wp);setEl('sp-ped',rows.filter(r=>r.pedido&&r.pedido!=='—').length)}
+}
+function updBadge(){const t=[...db.forma,...db.argamassa,...db.projetos].reduce((a,r)=>a+(r.pdfs?.length||0),0);setEl('dbadge',t)}
+function delRow(s,id){db[s]=db[s].filter(r=>r.id!=id);render(s);updStats(s);updBadge();renderDocs();toast('Excluído.')}
+function filt(s,q){document.querySelectorAll(`#tb-${s} tr:not(.er)`).forEach(tr=>{tr.style.display=tr.textContent.toLowerCase().includes(q.toLowerCase())?'':'none'})}
+
+// ── PDF MODAL ──
+function openPM(s,id){cpS=s;cpId=id;const rec=db[s].find(r=>r.id==id);document.getElementById('pt').textContent=`PDFs — ${rec.nome}`;pPdfs=[...(rec.pdfs||[])];renderPL();document.getElementById('pov').classList.add('open')}
+function closePM(){document.getElementById('pov').classList.remove('open');pPdfs=[];cpS=null;cpId=null}
+function hFile(files){Array.from(files).forEach(f=>{if(f.type==='application/pdf')pPdfs.push({name:f.name,size:f.size,url:URL.createObjectURL(f)})});renderPL()}
+function hDrop(e){e.preventDefault();document.getElementById('dzz').classList.remove('drag');hFile(e.dataTransfer.files)}
+function renderPL(){
+  document.getElementById('pl').innerHTML=pPdfs.map((f,i)=>`
+    <div class="pi">
+      <div class="pi-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <span class="pi-n">${esc(f.name)}</span>
+      <span class="pi-s">${f.size?(f.size/1024).toFixed(1)+'KB':''}</span>
+      <div class="pi-acts">
+        <button class="pa pv" onclick="openV(pPdfs[${i}])"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+        <button class="pa pd" onclick="dl(pPdfs[${i}])"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+        <button class="pa pr" onclick="rmPdf(${i})"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+    </div>`).join('');
+}
+function rmPdf(i){pPdfs.splice(i,1);renderPL()}
+function savePdfs(){db[cpS].find(r=>r.id==cpId).pdfs=[...pPdfs];render(cpS);updStats(cpS);updBadge();renderDocs();closePM();toast('PDFs salvos!')}
+
+// ── VIEWER ──
+function openV(f){cvPdf=f;document.getElementById('vtitle').textContent=f.name;const b=document.getElementById('vbody');b.innerHTML=f.url?`<iframe src="${f.url}" title="${esc(f.name)}"></iframe>`:`<div class="nopre"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>Pré-visualização indisponível</p></div>`;document.getElementById('vov').classList.add('open')}
+function closeV(){document.getElementById('vov').classList.remove('open');document.getElementById('vbody').innerHTML='';cvPdf=null}
+function dlCur(){if(cvPdf)dl(cvPdf)}
+function dl(f){if(!f?.url){toast('URL indisponível.',1);return}const a=document.createElement('a');a.href=f.url;a.download=f.name;a.click();toast('Download iniciado!')}
+
+// ── EDIT MODAL ──
+function openEM(s,id){
+  ceS=s;ceId=id;const rec=db[s].find(r=>r.id==id);
+  const b=document.getElementById('emb');const e=k=>esc(rec[k]||'');
+  const ufSel=UF_LIST.map(u=>`<option${rec.uf===u?' selected':''}>${u}</option>`).join('');
+  if(s==='forma')b.innerHTML=`<label>Nome<input class="fi" id="en" value="${e('nome')}"></label><label>Pedido<input class="fi" id="ep" value="${rec.pedido!=='—'?e('pedido'):''}"></label><label>QTD<input class="fi" id="eq" type="number" value="${rec.qty||0}" min="0"></label><label>UF<select class="fs" id="eu" style="width:100%"><option value="">—</option>${ufSel}</select></label><label>Responsável<input class="fi" id="er" value="${rec.resp!=='—'?e('resp'):''}"></label><label>Data<input class="fi" id="ed" type="date" value="${rec.data||''}"></label>`;
+  else if(s==='argamassa')b.innerHTML=`<label>Nome<input class="fi" id="en" value="${e('nome')}"></label><label>Valor (R$)<input class="fi" id="ev" type="number" value="${rec.valor||0}" step="0.01"></label><label>Data<input class="fi" id="ed" type="date" value="${rec.data||''}"></label>`;
+  else b.innerHTML=`<label>Nome<input class="fi" id="en" value="${e('nome')}"></label><label>Nº Pedido<input class="fi" id="ep" value="${rec.pedido!=='—'?e('pedido'):''}"></label><label>Valor (R$)<input class="fi" id="ev" type="number" value="${rec.valor||0}" step="0.01"></label><label>Data<input class="fi" id="ed" type="date" value="${rec.data||''}"></label>`;
+  document.getElementById('edelbtn').onclick=()=>{delRow(s,id);closeEM()};
+  document.getElementById('eov').classList.add('open');
+}
+function closeEM(){document.getElementById('eov').classList.remove('open')}
+function saveEdit(){
+  const rec=db[ceS].find(r=>r.id==ceId);
+  const g=id=>document.getElementById(id)?.value.trim()||'';
+  rec.nome=g('en')||rec.nome;
+  if(ceS==='forma'){rec.pedido=g('ep')||'—';rec.qty=parseInt(g('eq'))||0;rec.uf=g('eu')||'—';rec.resp=g('er')||'—';rec.data=g('ed')}
+  else if(ceS==='argamassa'){rec.valor=parseFloat(g('ev'))||0;rec.data=g('ed')}
+  else{rec.pedido=g('ep')||'—';rec.valor=parseFloat(g('ev'))||0;rec.data=g('ed')}
+  render(ceS);updStats(ceS);closeEM();toast('Salvo!');
+}
+function addCurrent(){const a=document.querySelector('#page-planilhas .sp.active');if(!a)return;const s=a.id.replace('sp-','');tog(s);document.getElementById('af-'+s).scrollIntoView({behavior:'smooth',block:'nearest'})}
+
+// ── DOCS ──
+function setDF(f,el){dFilt=f;document.querySelectorAll('.fc').forEach(c=>c.classList.remove('on'));el.classList.add('on');renderDocs()}
+function renderDocs(){
+  const q=(document.getElementById('dsq')?.value||'').toLowerCase();
+  const g=document.getElementById('dgrid');
+  let all=[];
+  ['forma','argamassa','projetos'].forEach(s=>{db[s].forEach(rec=>{(rec.pdfs||[]).forEach(f=>{all.push({...f,rn:rec.nome,src:s})})})});
+  if(dFilt!=='all')all=all.filter(d=>d.src===dFilt);
+  if(q)all=all.filter(d=>d.name.toLowerCase().includes(q)||d.rn.toLowerCase().includes(q));
+  if(!all.length){g.innerHTML=`<div class="dempty"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>Nenhum documento.<br><small>Anexe PDFs nos registros.</small></p></div>`;return}
+  const srcL={forma:'Forma',argamassa:'Argamassa',projetos:'Projetos'};
+  const srcC={forma:'src-f',argamassa:'src-a',projetos:'src-p'};
+  g.innerHTML=all.map((_,i)=>`<div class="dcard"><div class="dc-top"><div class="dc-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="dc-name">${esc(all[i].name)}</div><div class="dc-meta">${all[i].size?(all[i].size/1024).toFixed(1)+' KB':''}</div><div class="dc-src ${srcC[all[i].src]}">${srcL[all[i].src]}</div><div class="dc-meta" style="margin-top:4px">📎 ${esc(all[i].rn)}</div></div></div><div class="dc-acts"><button class="btn btn-ghost btn-sm dv"><svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Ver</button><button class="btn btn-ghost btn-sm dd"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Baixar</button></div></div>`).join('');
+  g.querySelectorAll('.dcard').forEach((c,i)=>{c.querySelector('.dv').onclick=()=>openV(all[i]);c.querySelector('.dd').onclick=()=>dl(all[i])});
+}
+
+// ── TOAST ──
+function toast(msg,err){const t=document.getElementById('toast'),m=document.getElementById('tmsg');m.textContent=msg;t.classList.toggle('err',!!err);t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
+
+// ── CHARTS ──
+function gTC(){
+  const dark=document.documentElement.getAttribute('data-theme')==='dark';
+  return{
+    grid:dark?'rgba(255,255,255,.04)':'rgba(0,0,0,.05)',
+    tick:dark?'#484f6a':'#6b7694',
+    tt:{backgroundColor:dark?'#131720':'#fff',borderColor:dark?'rgba(255,255,255,.08)':'rgba(0,0,0,.07)',borderWidth:1,titleColor:dark?'#f0f4ff':'#0b0e1a',bodyColor:dark?'#6b7694':'#3d4868',padding:11,cornerRadius:9}
+  };
+}
+function getAP(){
+  const c1=currentColor1;
+  const rgb=hexToRgb(c1);
+  return[
+    `rgba(${rgb.r},${rgb.g},${rgb.b},.78)`,
+    'rgba(59,130,246,.78)','rgba(234,179,8,.78)','rgba(34,197,94,.78)','rgba(139,92,246,.78)','rgba(239,68,68,.78)','rgba(244,114,182,.75)'
+  ];
+}
+const AP=['rgba(255,124,42,.78)','rgba(59,130,246,.78)','rgba(234,179,8,.78)','rgba(34,197,94,.78)','rgba(139,92,246,.78)','rgba(239,68,68,.78)','rgba(244,114,182,.75)'];
+const pal=n=>Array.from({length:n},(_,i)=>AP[i%AP.length]);
+function mk(id,cfg){const c=document.getElementById(id);if(!c)return;if(CH[id])CH[id].destroy();try{CH[id]=new Chart(c.getContext('2d'),cfg)}catch(e){}}
+function bO(ex={}){const t=gTC();const sc={grid:{color:t.grid},ticks:{color:t.tick,font:{size:10,family:'JetBrains Mono'}}};return{responsive:true,maintainAspectRatio:false,animation:{duration:500,easing:'easeInOutQuart'},plugins:{legend:{labels:{color:t.tick,font:{size:10,family:'Outfit'}}},tooltip:t.tt},scales:{x:sc,y:sc},...ex}}
+function nLO(){const o=bO();o.plugins.legend={display:false};return o}
+function dO(){const t=gTC();return{responsive:true,maintainAspectRatio:false,cutout:'64%',animation:{duration:500},plugins:{legend:{position:'bottom',labels:{color:t.tick,font:{size:10,family:'Outfit'},padding:12,boxWidth:10}},tooltip:t.tt}}}
+function pO(){const o=dO();delete o.cutout;return o}
+function setV(v){document.querySelectorAll('.cv-panel').forEach(e=>e.classList.remove('active'));const e=document.getElementById('cv-'+v);if(e)e.classList.add('active');refreshCharts()}
+
+function refreshCharts(){
+  const vp=db.projetos.reduce((a,r)=>a+(r.valor||0),0);
+  const va=db.argamassa.reduce((a,r)=>a+(r.valor||0),0);
+  const tot=db.forma.length+db.argamassa.length+db.projetos.length;
+  const qty=db.forma.reduce((a,r)=>a+(r.qty||0),0);
+  const pdfs=[...db.forma,...db.argamassa,...db.projetos].filter(r=>r.pdfs?.length).length;
+  setEl('k-total',tot);setEl('k-vproj',fS(vp));setEl('k-varg',fS(va));
+  setEl('k-qty',qty);setEl('k-pdf',pdfs);setEl('k-vtot',fS(vp+va));
+  const v=document.getElementById('csel')?.value||'ov';
+  if(v==='ov')dOv();else if(v==='fm')dFm();else if(v==='fi')dFi();else dTm();
+}
+
+function dOv(){
+  const t=gTC();const em=currentColor1;const c2=currentColor2;
+  const AP2=getAP();
+  mk('ch-dist',{type:'bar',data:{labels:['Forma','Argamassa','Projetos'],datasets:[{label:'Registros',data:[db.forma.length,db.argamassa.length,db.projetos.length],backgroundColor:[AP2[0],AP2[1],AP2[2]],borderRadius:8,borderSkipped:false}]},options:nLO()});
+  mk('ch-prop',{type:'doughnut',data:{labels:['Forma','Argamassa','Projetos'],datasets:[{data:[db.forma.length,db.argamassa.length,db.projetos.length],backgroundColor:[AP2[0],AP2[1],AP2[2]],borderWidth:0,hoverOffset:10}]},options:dO()});
+  const fp=db.forma.filter(r=>r.pdfs?.length).length,ap=db.argamassa.filter(r=>r.pdfs?.length).length,pp=db.projetos.filter(r=>r.pdfs?.length).length;
+  const rgb1=hexToRgb(em),rgb2=hexToRgb(c2);
+  mk('ch-polar',{type:'polarArea',data:{labels:['Forma','Argamassa','Projetos'],datasets:[{data:[fp,ap,pp],backgroundColor:[`rgba(${rgb1.r},${rgb1.g},${rgb1.b},.38)`,`rgba(${rgb2.r},${rgb2.g},${rgb2.b},.35)`,AP2[2].replace('.78','.35')],borderColor:[em,c2,AP2[2].replace('.78','1')],borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:500},plugins:{legend:{position:'bottom',labels:{color:t.tick,font:{size:10,family:'Outfit'},padding:12,boxWidth:10}},tooltip:t.tt},scales:{r:{grid:{color:t.grid},ticks:{color:t.tick,backdropColor:'transparent',font:{size:10}}}}}});
+  const vp2=db.projetos.reduce((a,r)=>a+(r.valor||0),0),va2=db.argamassa.reduce((a,r)=>a+(r.valor||0),0);
+  const o=nLO();o.scales.y.ticks={...o.scales.y.ticks,callback:v=>fS(v)};
+  mk('ch-fin2',{type:'bar',data:{labels:['Projetos','Argamassa'],datasets:[{label:'Valor',data:[vp2,va2],backgroundColor:[AP2[3],AP2[1]],borderRadius:9,borderSkipped:false}]},options:o});
+}
+function dFm(){
+  const AP2=getAP();
+  const lb=db.forma.map(r=>r.nome.length>18?r.nome.slice(0,18)+'…':r.nome),vl=db.forma.map(r=>r.qty||0);
+  const o=nLO();o.indexAxis='y';
+  mk('ch-fqty',{type:'bar',data:{labels:lb.length?lb:['—'],datasets:[{label:'QTD',data:vl.length?vl:[0],backgroundColor:pal(lb.length||1),borderRadius:6,borderSkipped:false}]},options:o});
+  const ufm={};db.forma.forEach(r=>{const k=r.uf&&r.uf!=='—'?r.uf:'—';ufm[k]=(ufm[k]||0)+1});
+  mk('ch-fuf',{type:'pie',data:{labels:Object.keys(ufm),datasets:[{data:Object.values(ufm),backgroundColor:pal(Object.keys(ufm).length),borderWidth:0,hoverOffset:10}]},options:pO()});
+  const rm={};db.forma.forEach(r=>{const k=r.resp&&r.resp!=='—'?r.resp:'Indef.';rm[k]=(rm[k]||0)+(r.qty||0)});
+  mk('ch-fresp',{type:'bar',data:{labels:Object.keys(rm).length?Object.keys(rm):['—'],datasets:[{label:'QTD',data:Object.values(rm).length?Object.values(rm):[0],backgroundColor:pal(Object.keys(rm).length||1),borderRadius:7,borderSkipped:false}]},options:nLO()});
+  const cp=db.forma.filter(r=>r.pedido&&r.pedido!=='—').length,sp=db.forma.length-cp;
+  mk('ch-fped',{type:'doughnut',data:{labels:['Com Pedido','Sem Pedido'],datasets:[{data:[cp,sp],backgroundColor:[AP2[0],AP2[2]],borderWidth:0,hoverOffset:10}]},options:dO()});
+}
+function dFi(){
+  const AP2=getAP();
+  const pl=db.projetos.map(r=>r.nome.length>14?r.nome.slice(0,14)+'…':r.nome),pv=db.projetos.map(r=>r.valor||0);
+  const o=nLO();o.scales.y.ticks={...o.scales.y.ticks,callback:v=>fS(v)};
+  mk('ch-pval',{type:'bar',data:{labels:pl.length?pl:['—'],datasets:[{label:'Valor',data:pv.length?pv:[0],backgroundColor:AP2[3],borderRadius:9,borderSkipped:false}]},options:o});
+  const al=db.argamassa.map(r=>r.nome.length>12?r.nome.slice(0,12)+'…':r.nome),av=db.argamassa.map(r=>r.valor||0);
+  mk('ch-aval',{type:'pie',data:{labels:al.length?al:['—'],datasets:[{data:av.length?av:[1],backgroundColor:pal(al.length||1),borderWidth:0,hoverOffset:10}]},options:pO()});
+  const ta=db.argamassa.reduce((a,r)=>a+(r.valor||0),0),tp=db.projetos.reduce((a,r)=>a+(r.valor||0),0);
+  mk('ch-cmod',{type:'doughnut',data:{labels:['Argamassa','Projetos'],datasets:[{data:[ta,tp],backgroundColor:[AP2[1],AP2[0]],borderWidth:0,hoverOffset:10}]},options:dO()});
+}
+function dTm(){
+  const AP2=getAP();
+  const all=[...db.forma.map(r=>({d:r.data,m:'Forma'})),...db.argamassa.map(r=>({d:r.data,m:'Argamassa'})),...db.projetos.map(r=>({d:r.data,m:'Projetos'}))].filter(r=>r.d);
+  const months={};all.forEach(r=>{const[y,m]=r.d.split('-');const k=`${y}-${m}`;if(!months[k])months[k]={Forma:0,Argamassa:0,Projetos:0};months[k][r.m]++});
+  const keys=Object.keys(months).sort();
+  const MN=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const mL=keys.map(k=>{const[y,m]=k.split('-');return`${MN[parseInt(m)-1]}/${y.slice(2)}`});
+  const rgb1=hexToRgb(currentColor1),rgb2=hexToRgb(currentColor2);
+  const em=`rgba(${rgb1.r},${rgb1.g},${rgb1.b},1)`;
+  const emF=`rgba(${rgb1.r},${rgb1.g},${rgb1.b},.09)`;
+  const c2=`rgba(${rgb2.r},${rgb2.g},${rgb2.b},1)`;
+  const c2F=`rgba(${rgb2.r},${rgb2.g},${rgb2.b},.09)`;
+  const e2=!keys.length;
+  mk('ch-tline',{type:'line',data:{labels:e2?['—']:mL,datasets:[
+    {label:'Forma',data:e2?[0]:keys.map(k=>months[k].Forma),borderColor:em,backgroundColor:emF,fill:true,tension:.4,pointRadius:4,pointHoverRadius:7,borderWidth:2.5},
+    {label:'Argamassa',data:e2?[0]:keys.map(k=>months[k].Argamassa),borderColor:'rgba(59,130,246,1)',backgroundColor:'rgba(59,130,246,.09)',fill:true,tension:.4,pointRadius:4,pointHoverRadius:7,borderWidth:2.5},
+    {label:'Projetos',data:e2?[0]:keys.map(k=>months[k].Projetos),borderColor:c2,backgroundColor:c2F,fill:true,tension:.4,pointRadius:4,pointHoverRadius:7,borderWidth:2.5}
+  ]},options:bO()});
+  mk('ch-tbar',{type:'bar',data:{labels:e2?['—']:mL,datasets:[
+    {label:'Forma',data:e2?[0]:keys.map(k=>months[k].Forma),backgroundColor:AP2[0],borderRadius:5,borderSkipped:false},
+    {label:'Argamassa',data:e2?[0]:keys.map(k=>months[k].Argamassa),backgroundColor:AP2[1],borderRadius:5,borderSkipped:false},
+    {label:'Projetos',data:e2?[0]:keys.map(k=>months[k].Projetos),backgroundColor:AP2[2],borderRadius:5,borderSkipped:false}
+  ]},options:bO()});
+}
+
+// ── OVERLAYS ──
+document.querySelectorAll('.ovl').forEach(o=>o.addEventListener('click',e=>{
+  if(e.target===o){o.classList.remove('open');pPdfs=[];if(o.id==='vov'){document.getElementById('vbody').innerHTML='';cvPdf=null}}
+}));
+
+// ── INIT ──
+['forma','argamassa','projetos'].forEach(s=>{render(s);updStats(s)});
+updBadge();
+applyBrandColors(currentColor1,currentColor2);
+</script>
+</body>
+</html>
