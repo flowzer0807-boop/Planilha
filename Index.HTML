@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>TaskGrid — Gestão Inteligente de Obras</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   TASKGRID LANDING — Cinematic Premium SaaS
+   Reference: Vercel × Linear × Framer
+   ══════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+:root {
+  --bg:       #050508;
+  --s1:       #08090f;
+  --s2:       #0d0f18;
+  --s3:       #12152a;
+  --b1:       rgba(255,255,255,.06);
+  --b2:       rgba(255,255,255,.1);
+  --b3:       rgba(255,255,255,.16);
+  --t1:       #f2f4ff;
+  --t2:       #7a8aaa;
+  --t3:       #3a4460;
+  --em:       #00e5be;
+  --em2:      #00c4a2;
+  --ea:       rgba(0,229,190,.1);
+  --eglow:    rgba(0,229,190,.22);
+  --blue:     #4f8eff;
+  --purple:   #9b6fff;
+  --amber:    #f5a623;
+  --r:        12px;
+  --r2:       20px;
+  font-size: 16px;
+}
+
+html { scroll-behavior: smooth }
+body {
+  font-family: 'Geist', system-ui, sans-serif;
+  background: var(--bg); color: var(--t1);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+::-webkit-scrollbar { width: 4px }
+::-webkit-scrollbar-thumb { background: var(--b2); border-radius: 4px }
+svg { fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round }
+
+/* ── ANIMATED MESH BACKGROUND ── */
+.mesh {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  overflow: hidden;
+}
+.mesh::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 90% 60% at 5% -5%,  rgba(0,229,190,.09) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 70% at 95% 90%,  rgba(79,142,255,.07) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 80% at 50% 40%,  rgba(155,111,255,.05) 0%, transparent 50%);
+  animation: meshShift 14s ease-in-out infinite alternate;
+}
+@keyframes meshShift {
+  from { transform: scale(1) rotate(0deg) }
+  to   { transform: scale(1.08) rotate(1.5deg) }
+}
+.mesh::after {
+  content: ''; position: absolute; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; padding: 0 48px;
+  height: 62px;
+  background: rgba(5,5,8,.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--b1);
+  transition: all .3s;
+}
+.nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none }
+.nav-mark {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--em), #0086d4);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 0 1px rgba(0,229,190,.3), 0 4px 16px rgba(0,229,190,.2);
+  position: relative; overflow: hidden;
+}
+.nav-mark::after {
+  content: '';
+  position: absolute; top: 0; left: -40%;
+  width: 30%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent);
+  animation: navShimmer 3s ease-in-out infinite;
+}
+@keyframes navShimmer {
+  0%, 100% { transform: translateX(-60%) skewX(-20deg) }
+  50%       { transform: translateX(300%) skewX(-20deg) }
+}
+.nav-mark svg { width: 15px; height: 15px; stroke: #040e09; stroke-width: 2.5 }
+.nav-brand { font-size: 15px; font-weight: 700; letter-spacing: -.4px; color: var(--t1) }
+
+.nav-links { display: flex; align-items: center; gap: 6px; margin: 0 auto }
+.nav-links a {
+  color: var(--t2); font-size: 13.5px; font-weight: 500;
+  text-decoration: none; padding: 6px 12px; border-radius: 7px;
+  transition: color .15s, background .15s;
+}
+.nav-links a:hover { color: var(--t1); background: var(--b1) }
+
+.nav-cta { display: flex; gap: 8px }
+.btn-n {
+  padding: 7px 16px; border-radius: 9px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; font-family: 'Geist', sans-serif;
+  text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+  transition: all .18s cubic-bezier(.4,0,.2,1);
+}
+.btn-ghost {
+  background: transparent; color: var(--t2); border: 1px solid var(--b2);
+}
+.btn-ghost:hover { background: var(--b1); color: var(--t1) }
+.btn-em {
+  background: linear-gradient(135deg, var(--em), #00a8d6);
+  color: #030e0a; font-weight: 700;
+  box-shadow: 0 0 0 1px rgba(0,229,190,.35), 0 4px 16px rgba(0,229,190,.22);
+}
+.btn-em:hover { transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(0,229,190,.5), 0 6px 22px rgba(0,229,190,.32) }
+.btn-em svg { stroke: #030e0a }
+
+/* ── HERO ── */
+.hero {
+  position: relative; z-index: 1;
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 100px 24px 80px; text-align: center; overflow: hidden;
+}
+
+/* floating grid lines */
+.hero-grid {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(var(--b1) 1px, transparent 1px),
+    linear-gradient(90deg, var(--b1) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 40%, black 30%, transparent 80%);
+  animation: gridPulse 6s ease-in-out infinite alternate;
+}
+@keyframes gridPulse {
+  from { opacity: .5 }
+  to   { opacity: 1 }
+}
+
+/* rotating ring */
+.hero-ring {
+  position: absolute;
+  width: 680px; height: 680px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,229,190,.08);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  animation: ringRotate 28s linear infinite;
+}
+.hero-ring::before {
+  content: '';
+  position: absolute; top: -3px; left: 50%;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--em);
+  box-shadow: 0 0 12px var(--em), 0 0 24px rgba(0,229,190,.5);
+}
+.hero-ring-2 {
+  position: absolute;
+  width: 900px; height: 900px;
+  border-radius: 50%;
+  border: 1px solid rgba(79,142,255,.05);
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  animation: ringRotate 45s linear infinite reverse;
+}
+.hero-ring-2::before {
+  content: '';
+  position: absolute; top: -3px; left: 30%;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 10px var(--blue);
+}
+@keyframes ringRotate { to { transform: translate(-50%, -50%) rotate(360deg) } }
+
+/* badge */
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 14px 5px 8px; border-radius: 99px;
+  background: rgba(0,229,190,.07); border: 1px solid rgba(0,229,190,.18);
+  font-size: 12px; font-weight: 600; color: var(--em);
+  margin-bottom: 28px; cursor: default;
+  animation: badgeIn .6s cubic-bezier(.16,1,.3,1) both;
+  font-family: 'Geist Mono', monospace; letter-spacing: .3px;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--em); animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+@keyframes badgeIn { from{opacity:0;transform:translateY(-12px) scale(.9)} to{opacity:1;transform:translateY(0) scale(1)} }
+
+/* hero title */
+.hero-h1 {
+  font-size: clamp(46px, 7vw, 88px);
+  font-weight: 900;
+  line-height: 1.0;
+  letter-spacing: -3px;
+  max-width: 820px;
+  margin: 0 auto 22px;
+  animation: heroTextIn .7s .1s cubic-bezier(.16,1,.3,1) both;
+}
+.hero-h1 .grad {
+  background: linear-gradient(135deg, var(--t1) 0%, var(--t2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-h1 .grad-em {
+  background: linear-gradient(135deg, var(--em) 0%, #60e8ff 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+@keyframes heroTextIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.hero-sub {
+  font-size: 17px; color: var(--t2); max-width: 540px; margin: 0 auto 38px;
+  line-height: 1.65; font-weight: 400;
+  animation: heroTextIn .7s .2s cubic-bezier(.16,1,.3,1) both;
+}
+
+.hero-actions {
+  display: flex; align-items: center; gap: 12px; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 64px;
+  animation: heroTextIn .7s .3s cubic-bezier(.16,1,.3,1) both;
+}
+.btn-lg { padding: 12px 26px; font-size: 14.5px; border-radius: 12px; gap: 8px }
+.btn-lg svg { width: 15px; height: 15px }
+
+/* hero stats */
+.hero-stats {
+  display: flex; align-items: center; gap: 40px; justify-content: center;
+  flex-wrap: wrap;
+  animation: heroTextIn .7s .45s cubic-bezier(.16,1,.3,1) both;
+}
+.hs {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.hs-v {
+  font-size: 28px; font-weight: 800; letter-spacing: -1px;
+  background: linear-gradient(135deg, var(--t1), var(--t2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hs-l { font-size: 12px; color: var(--t3); font-weight: 500 }
+.hs-sep { width: 1px; height: 36px; background: var(--b2) }
+
+/* scroll indicator */
+.scroll-ind {
+  position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  animation: heroTextIn .7s .6s cubic-bezier(.16,1,.3,1) both;
+}
+.scroll-dot {
+  width: 20px; height: 32px; border: 1.5px solid var(--b2); border-radius: 12px;
+  display: flex; justify-content: center; padding: 5px 0;
+}
+.scroll-dot::after {
+  content: '';
+  width: 3px; height: 7px; border-radius: 3px;
+  background: var(--em);
+  animation: scrollDown 2s ease-in-out infinite;
+}
+@keyframes scrollDown {
+  0%   { transform: translateY(0); opacity: 1 }
+  60%  { transform: translateY(8px); opacity: 0 }
+  100% { transform: translateY(0); opacity: 0 }
+}
+.scroll-text { font-size: 10px; color: var(--t3); font-family: 'Geist Mono', monospace; letter-spacing: 1.2px; text-transform: uppercase }
+
+/* ── SECTION BASE ── */
+section { position: relative; z-index: 1 }
+.container { max-width: 1160px; margin: 0 auto; padding: 0 32px }
+.section-header { text-align: center; margin-bottom: 60px }
+.eyebrow {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--em); margin-bottom: 14px; display: block;
+}
+.section-title {
+  font-size: clamp(32px, 4vw, 50px); font-weight: 800; letter-spacing: -1.5px;
+  line-height: 1.1;
+}
+.section-sub {
+  font-size: 16px; color: var(--t2); max-width: 480px; margin: 16px auto 0;
+  line-height: 1.65;
+}
+
+/* ── FEATURES SECTION ── */
+.features { padding: 100px 0 }
+
+/* rotating cube ornament */
+.cube-orbit {
+  position: absolute; right: -60px; top: 50%;
+  width: 200px; height: 200px; opacity: .06;
+  animation: cubeRotate 20s linear infinite;
+  pointer-events: none;
+}
+@keyframes cubeRotate { to { transform: rotate(360deg) } }
+
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+.feat-card {
+  background: var(--s1);
+  border: 1px solid var(--b1);
+  border-radius: var(--r2);
+  padding: 28px 26px;
+  position: relative; overflow: hidden;
+  transition: all .25s cubic-bezier(.4,0,.2,1);
+  cursor: default;
+}
+.feat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--em), transparent);
+  opacity: 0; transition: opacity .25s;
+}
+.feat-card:hover { transform: translateY(-4px); border-color: var(--b2); box-shadow: 0 24px 60px rgba(0,0,0,.5) }
+.feat-card:hover::before { opacity: 1 }
+.feat-card.featured {
+  background: linear-gradient(135deg, rgba(0,229,190,.06) 0%, rgba(0,134,212,.04) 100%);
+  border-color: rgba(0,229,190,.15);
+  grid-column: span 2;
+}
+@media (max-width: 800px) { .feat-card.featured { grid-column: span 1 } }
+.feat-icon {
+  width: 44px; height: 44px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px; position: relative; overflow: hidden;
+}
+.feat-icon svg { width: 20px; height: 20px; position: relative; z-index: 1 }
+.fi-em  { background: var(--ea) } .fi-em svg  { stroke: var(--em) }
+.fi-b   { background: rgba(79,142,255,.1) } .fi-b svg   { stroke: var(--blue) }
+.fi-p   { background: rgba(155,111,255,.1) } .fi-p svg   { stroke: var(--purple) }
+.fi-a   { background: rgba(245,166,35,.1) } .fi-a svg   { stroke: var(--amber) }
+.fi-r   { background: rgba(239,68,68,.1) } .fi-r svg   { stroke: #ef4444 }
+.feat-title { font-size: 17px; font-weight: 700; letter-spacing: -.35px; margin-bottom: 9px }
+.feat-desc  { font-size: 14px; color: var(--t2); line-height: 1.65 }
+.feat-tags  { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px }
+.feat-tag {
+  padding: 3px 10px; border-radius: 5px; font-size: 11px; font-weight: 600;
+  font-family: 'Geist Mono', monospace; letter-spacing: .4px;
+}
+.ft-em { background: var(--ea); color: var(--em) }
+.ft-b  { background: rgba(79,142,255,.1); color: var(--blue) }
+.ft-p  { background: rgba(155,111,255,.1); color: var(--purple) }
+
+/* ── MODULES SECTION ── */
+.modules { padding: 100px 0; background: var(--s1); border-top: 1px solid var(--b1); border-bottom: 1px solid var(--b1) }
+.modules-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2px;
+  background: var(--b1); border-radius: var(--r2); overflow: hidden;
+}
+@media (max-width: 700px) { .modules-grid { grid-template-columns: 1fr } }
+.mod-cell {
+  background: var(--s1);
+  padding: 36px 32px;
+  cursor: default;
+  transition: background .2s;
+  position: relative; overflow: hidden;
+}
+.mod-cell:hover { background: var(--s2) }
+.mod-cell::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  transform: scaleX(0); transition: transform .3s cubic-bezier(.4,0,.2,1);
+}
+.mod-cell:hover::after { transform: scaleX(1) }
+.mc-em::after { background: var(--em) }
+.mc-b::after  { background: var(--blue) }
+.mc-p::after  { background: var(--purple) }
+.mod-num {
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px; color: var(--t3); font-weight: 600; letter-spacing: 1px;
+  margin-bottom: 22px;
+}
+.mod-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px;
+}
+.mod-icon svg { width: 24px; height: 24px }
+.mi-em { background: var(--ea) } .mi-em svg { stroke: var(--em) }
+.mi-b  { background: rgba(79,142,255,.1) } .mi-b svg { stroke: var(--blue) }
+.mi-p  { background: rgba(155,111,255,.1) } .mi-p svg { stroke: var(--purple) }
+.mod-title { font-size: 20px; font-weight: 700; letter-spacing: -.4px; margin-bottom: 10px }
+.mod-desc  { font-size: 13.5px; color: var(--t2); line-height: 1.65 }
+.mod-fields {
+  display: flex; flex-wrap: wrap; gap: 5px; margin-top: 20px;
+}
+.mf-chip {
+  padding: 3px 9px; border-radius: 4px;
+  font-size: 11px; font-weight: 500; font-family: 'Geist Mono', monospace;
+  border: 1px solid var(--b1); color: var(--t3);
+}
+
+/* ── DASHBOARD PREVIEW ── */
+.dashboard-sec { padding: 100px 0 }
+.dash-frame {
+  background: var(--s1);
+  border: 1px solid var(--b2);
+  border-radius: 22px; overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+  position: relative;
+}
+.dash-bar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 14px 18px; border-bottom: 1px solid var(--b1);
+  background: var(--s2);
+}
+.dash-dot { width: 10px; height: 10px; border-radius: 50% }
+.dd1 { background: #ff5f56 } .dd2 { background: #febc2e } .dd3 { background: #28c840 }
+.dash-url {
+  flex: 1; background: var(--bg); border-radius: 6px;
+  padding: 5px 12px; text-align: center;
+  font-family: 'Geist Mono', monospace; font-size: 11.5px; color: var(--t3);
+}
+.dash-inner {
+  display: grid; grid-template-columns: 200px 1fr;
+  min-height: 380px;
+}
+@media (max-width: 700px) { .dash-inner { grid-template-columns: 1fr } }
+.dash-sidebar {
+  border-right: 1px solid var(--b1);
+  padding: 20px 16px;
+  background: rgba(8,9,15,.7);
+}
+.ds-logo {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0 20px; border-bottom: 1px solid var(--b1);
+  margin-bottom: 16px;
+}
+.ds-logo-mark {
+  width: 24px; height: 24px; border-radius: 6px;
+  background: linear-gradient(135deg, var(--em), #0086d4);
+}
+.ds-logo-name { font-size: 12px; font-weight: 700; color: var(--t1) }
+.ds-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 6px; margin-bottom: 2px;
+  font-size: 11.5px; color: var(--t3);
+}
+.ds-item.on { background: var(--ea); color: var(--em) }
+.ds-dot { width: 8px; height: 8px; border-radius: 2px }
+.dash-content { padding: 20px; display: flex; flex-direction: column; gap: 14px }
+.dash-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px }
+@media (max-width: 700px) { .dash-row { grid-template-columns: repeat(2,1fr) } }
+.dash-card {
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 10px; padding: 12px; position: relative; overflow: hidden;
+}
+.dash-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px }
+.dc-em::before { background:linear-gradient(90deg,var(--em),transparent) }
+.dc-b::before  { background:linear-gradient(90deg,var(--blue),transparent) }
+.dc-p::before  { background:linear-gradient(90deg,var(--purple),transparent) }
+.dc-a::before  { background:linear-gradient(90deg,var(--amber),transparent) }
+.dash-card-label { font-size: 9px; color: var(--t3); font-family: 'Geist Mono', monospace; letter-spacing: .7px; text-transform: uppercase; margin-bottom: 5px }
+.dash-card-val { font-size: 20px; font-weight: 800; letter-spacing: -.8px }
+.dc-em .dash-card-val { color: var(--em) }
+.dc-b .dash-card-val { color: var(--blue) }
+.dc-p .dash-card-val { color: var(--purple) }
+.dc-a .dash-card-val { color: var(--amber) }
+.dash-chart-row { display: grid; grid-template-columns: 2fr 1fr; gap: 10px }
+@media (max-width: 700px) { .dash-chart-row { grid-template-columns: 1fr } }
+.dash-chart-card {
+  background: var(--s2); border: 1px solid var(--b1);
+  border-radius: 10px; padding: 14px; height: 140px;
+  display: flex; flex-direction: column;
+}
+.dcc-title { font-size: 10px; font-weight: 600; color: var(--t2); margin-bottom: 10px }
+.dcc-bars { display: flex; align-items: flex-end; gap: 5px; flex: 1 }
+.dcc-bar { flex: 1; border-radius: 4px 4px 0 0; transition: height .3s }
+.b-em  { background: rgba(0,229,190,.5) }
+.b-b   { background: rgba(79,142,255,.5) }
+.b-p   { background: rgba(155,111,255,.5) }
+.dcc-donut { flex: 1; display: flex; align-items: center; justify-content: center }
+.donut-svg circle { fill: none; stroke-width: 18; stroke-linecap: round }
+
+/* ── TESTIMONIALS ── */
+.testimonials { padding: 100px 0; overflow: hidden }
+.testi-scroll-wrap { position: relative }
+.testi-scroll-wrap::before,
+.testi-scroll-wrap::after {
+  content: ''; position: absolute; top: 0; bottom: 0;
+  width: 120px; z-index: 2; pointer-events: none;
+}
+.testi-scroll-wrap::before { left: 0; background: linear-gradient(90deg, var(--bg), transparent) }
+.testi-scroll-wrap::after  { right: 0; background: linear-gradient(-90deg, var(--bg), transparent) }
+.testi-track {
+  display: flex; gap: 16px;
+  animation: scrollLeft 35s linear infinite;
+  width: max-content;
+}
+.testi-track:hover { animation-play-state: paused }
+@keyframes scrollLeft { to { transform: translateX(-50%) } }
+.testi-card {
+  width: 300px; flex-shrink: 0;
+  background: var(--s1); border: 1px solid var(--b1);
+  border-radius: var(--r2); padding: 22px;
+  cursor: default;
+}
+.testi-text { font-size: 13.5px; color: var(--t2); line-height: 1.7; margin-bottom: 18px }
+.testi-name { font-size: 13px; font-weight: 600; color: var(--t1) }
+.testi-role { font-size: 11px; color: var(--t3); margin-top: 2px }
+.testi-stars { color: var(--amber); font-size: 12px; margin-bottom: 12px }
+
+/* ── METRICS BAND ── */
+.metrics-band {
+  padding: 70px 0;
+  background: linear-gradient(135deg, rgba(0,229,190,.04) 0%, rgba(79,142,255,.03) 100%);
+  border-top: 1px solid var(--b1); border-bottom: 1px solid var(--b1);
+}
+.metrics-inner {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; flex-wrap: wrap;
+}
+.mb-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 20px 48px;
+  border-right: 1px solid var(--b1);
+}
+.mb-item:last-child { border-right: none }
+.mb-val {
+  font-size: 42px; font-weight: 900; letter-spacing: -2px;
+  background: linear-gradient(135deg, var(--t1) 0%, var(--t2) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.mb-val span { color: var(--em); -webkit-text-fill-color: var(--em) }
+.mb-label { font-size: 12.5px; color: var(--t3); font-weight: 500 }
+
+/* ── INTEGRATIONS / TECH STACK ── */
+.stack-sec { padding: 100px 0 }
+.stack-grid {
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+  max-width: 700px; margin: 0 auto;
+}
+.stack-chip {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 99px;
+  background: var(--s1); border: 1px solid var(--b1);
+  font-size: 13px; font-weight: 600; color: var(--t2);
+  cursor: default; transition: all .2s;
+}
+.stack-chip:hover { border-color: var(--b2); color: var(--t1); transform: translateY(-2px) }
+.stack-chip .chip-dot { width: 7px; height: 7px; border-radius: 50% }
+
+/* ── CTA SECTION ── */
+.cta-sec {
+  padding: 120px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-bg {
+  position: absolute; inset: 0; pointer-events: none;
+}
+.cta-bg::before {
+  content: '';
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%,-50%);
+  width: 600px; height: 600px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,190,.1), transparent 70%);
+  animation: ctaPulse 4s ease-in-out infinite;
+}
+@keyframes ctaPulse {
+  0%,100% { transform: translate(-50%,-50%) scale(1) }
+  50%      { transform: translate(-50%,-50%) scale(1.1) }
+}
+/* rotating star/asterisk */
+.cta-rotate {
+  position: absolute; pointer-events: none;
+}
+.cta-rotate-1 { top: 15%; left: 10%; animation: spin 12s linear infinite }
+.cta-rotate-2 { bottom: 20%; right: 8%; animation: spin 18s linear infinite reverse; opacity: .5 }
+@keyframes spin { to { transform: rotate(360deg) } }
+.cta-rotate svg { stroke: rgba(0,229,190,.2) }
+
+.cta-title {
+  font-size: clamp(36px, 5vw, 64px); font-weight: 900; letter-spacing: -2px;
+  line-height: 1.08; max-width: 680px; margin: 0 auto 20px;
+  position: relative; z-index: 1;
+}
+.cta-sub { font-size: 16px; color: var(--t2); max-width: 420px; margin: 0 auto 40px; position: relative; z-index: 1; line-height: 1.65 }
+.cta-actions { display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap; position: relative; z-index: 1 }
+.cta-note { font-size: 12px; color: var(--t3); margin-top: 14px; position: relative; z-index: 1 }
+
+/* ── FOOTER ── */
+footer {
+  border-top: 1px solid var(--b1);
+  padding: 48px 32px;
+  position: relative; z-index: 1;
+}
+.footer-inner {
+  max-width: 1160px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 20px;
+}
+.foot-logo { display: flex; align-items: center; gap: 10px }
+.foot-mark {
+  width: 26px; height: 26px; border-radius: 7px;
+  background: linear-gradient(135deg, var(--em), #0086d4);
+  display: flex; align-items: center; justify-content: center;
+}
+.foot-mark svg { width: 12px; height: 12px; stroke: #040e09; stroke-width: 2.5 }
+.foot-name { font-size: 14px; font-weight: 700; color: var(--t1) }
+.foot-links { display: flex; gap: 22px; flex-wrap: wrap }
+.foot-links a { font-size: 13px; color: var(--t3); text-decoration: none; transition: color .15s }
+.foot-links a:hover { color: var(--t1) }
+.foot-copy { font-size: 12px; color: var(--t3) }
+
+/* ── REVEAL ANIMATIONS ── */
+.reveal {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity .65s cubic-bezier(.16,1,.3,1), transform .65s cubic-bezier(.16,1,.3,1);
+}
+.reveal.visible { opacity: 1; transform: translateY(0) }
+.reveal-left {
+  opacity: 0; transform: translateX(-28px);
+  transition: opacity .65s .1s cubic-bezier(.16,1,.3,1), transform .65s .1s cubic-bezier(.16,1,.3,1);
+}
+.reveal-left.visible { opacity: 1; transform: translateX(0) }
+.reveal-right {
+  opacity: 0; transform: translateX(28px);
+  transition: opacity .65s .2s cubic-bezier(.16,1,.3,1), transform .65s .2s cubic-bezier(.16,1,.3,1);
+}
+.reveal-right.visible { opacity: 1; transform: translateX(0) }
+.stagger > * {
+  opacity: 0; transform: translateY(16px);
+  transition: opacity .5s cubic-bezier(.16,1,.3,1), transform .5s cubic-bezier(.16,1,.3,1);
+}
+.stagger.visible > *:nth-child(1) { opacity:1; transform:translateY(0); transition-delay:.05s }
+.stagger.visible > *:nth-child(2) { opacity:1; transform:translateY(0); transition-delay:.12s }
+.stagger.visible > *:nth-child(3) { opacity:1; transform:translateY(0); transition-delay:.19s }
+.stagger.visible > *:nth-child(4) { opacity:1; transform:translateY(0); transition-delay:.26s }
+.stagger.visible > *:nth-child(5) { opacity:1; transform:translateY(0); transition-delay:.33s }
+.stagger.visible > *:nth-child(6) { opacity:1; transform:translateY(0); transition-delay:.40s }
+
+/* ── UTILITY ── */
+.sep { width: 1px; height: 28px; background: var(--b2) }
+@media (max-width: 600px) {
+  .mb-item { padding: 16px 24px }
+  nav { padding: 0 20px }
+  .nav-links { display: none }
+  .container { padding: 0 20px }
+}
+
+/* floating dots */
+.float-dots { position: absolute; inset: 0; pointer-events: none; overflow: hidden }
+.fdot {
+  position: absolute; border-radius: 50%;
+  background: var(--em); opacity: 0;
+  animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+  0%   { transform: translateY(0) scale(1); opacity: 0 }
+  10%  { opacity: .2 }
+  90%  { opacity: .1 }
+  100% { transform: translateY(-80vh) scale(.3); opacity: 0 }
+}
+</style>
+</head>
+<body>
+
+<div class="mesh"></div>
+
+<!-- ╔══ NAV ══╗ -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-mark">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
+    </div>
+    <span class="nav-brand">TaskGrid</span>
+  </a>
+  <div class="nav-links">
+    <a href="#funcionalidades">Funcionalidades</a>
+    <a href="#modulos">Módulos</a>
+    <a href="#dashboard">Dashboard</a>
+    <a href="#depoimentos">Depoimentos</a>
+  </div>
+  <div class="nav-cta">
+    <a class="btn-n btn-ghost btn-sm" href="#">Entrar</a>
+    <a class="btn-n btn-em btn-sm" href="TaskGrid.html">
+      Usar grátis
+      <svg viewBox="0 0 24 24" width="12" height="12"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </a>
+  </div>
+</nav>
+
+<!-- ╔══ HERO ══╗ -->
+<section class="hero">
+  <div class="float-dots" id="float-dots"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-ring"></div>
+  <div class="hero-ring-2"></div>
+
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Plataforma v2.0 — Nova geração de gestão de obras
+  </div>
+
+  <h1 class="hero-h1">
+    <span class="grad">Gerencie suas obras</span><br>
+    <span class="grad-em">com inteligência</span>
+  </h1>
+
+  <p class="hero-sub">
+    Controle total de Formas, Argamassa e Projetos em uma plataforma unificada. Dashboard em tempo real, PDFs integrados e análise avançada.
+  </p>
+
+  <div class="hero-actions">
+    <a class="btn-n btn-em btn-lg" href="TaskGrid.html">
+      <svg viewBox="0 0 24 24" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Começar agora — grátis
+    </a>
+    <a class="btn-n btn-ghost btn-lg" href="#funcionalidades">
+      <svg viewBox="0 0 24 24" width="15" height="15"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Ver funcionalidades
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div class="hs">
+      <span class="hs-v">+3.200</span>
+      <span class="hs-l">obras gerenciadas</span>
+    </div>
+    <div class="hs-sep"></div>
+    <div class="hs">
+      <span class="hs-v">98%</span>
+      <span class="hs-l">satisfação</span>
+    </div>
+    <div class="hs-sep"></div>
+    <div class="hs">
+      <span class="hs-v">40x</span>
+      <span class="hs-l">mais produtivo</span>
+    </div>
+    <div class="hs-sep"></div>
+    <div class="hs">
+      <span class="hs-v">100%</span>
+      <span class="hs-l">sem papel</span>
+    </div>
+  </div>
+
+  <div class="scroll-ind">
+    <div class="scroll-dot"></div>
+    <span class="scroll-text">scroll</span>
+  </div>
+</section>
+
+<!-- ╔══ FEATURES ══╗ -->
+<section class="features" id="funcionalidades">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Funcionalidades</span>
+      <h2 class="section-title">Tudo que você precisa,<br>em um só lugar</h2>
+      <p class="section-sub">Ferramentas poderosas projetadas para construtoras e gestores de obras modernos.</p>
+    </div>
+
+    <div class="feat-grid stagger">
+      <div class="feat-card featured">
+        <div class="feat-icon fi-em">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+        </div>
+        <div class="feat-title">Planilhas Inteligentes</div>
+        <div class="feat-desc">Três módulos integrados — Forma, Argamassa e Projetos — com campos especializados, busca em tempo real e edição inline. Gerencie centenas de registros com a agilidade de uma planilha profissional.</div>
+        <div class="feat-tags">
+          <span class="feat-tag ft-em">Forma</span>
+          <span class="feat-tag ft-b">Argamassa</span>
+          <span class="feat-tag ft-p">Projetos</span>
+        </div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-b">
+          <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <div class="feat-title">Dashboard Analítico</div>
+        <div class="feat-desc">Gráficos interativos com 4 visões distintas: Visão Geral, Análise de Forma, Financeira e Linha do Tempo. Dados que realmente ajudam a decidir.</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-p">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <div class="feat-title">PDFs Integrados</div>
+        <div class="feat-desc">Anexe múltiplos PDFs a cada registro. Visualize no browser, baixe com um clique ou gerencie todos os documentos na aba central de Documentos.</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-a">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+        </div>
+        <div class="feat-title">KPIs em Tempo Real</div>
+        <div class="feat-desc">Métricas automáticas: valor total por módulo, PDFs anexados, QTD de itens, responsáveis únicos e muito mais — sempre atualizados à medida que você edita.</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-em">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="feat-title">Multi-responsável</div>
+        <div class="feat-desc">Vincule responsáveis a cada registro de Forma. Veja a distribuição de carga por pessoa nos gráficos de análise e tome decisões baseadas em dados.</div>
+      </div>
+
+      <div class="feat-card">
+        <div class="feat-icon fi-r">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </div>
+        <div class="feat-title">Tema Claro & Escuro</div>
+        <div class="feat-desc">Interface adaptável com alternância instantânea entre modo claro e escuro. Os gráficos, tabelas e modais se ajustam automaticamente — sem recarregar.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ╔══ MODULES ══╗ -->
+<section class="modules" id="modulos">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Módulos</span>
+      <h2 class="section-title">Três planilhas,<br>um sistema</h2>
+      <p class="section-sub">Cada módulo foi projetado para as necessidades específicas do setor de construção civil.</p>
+    </div>
+  </div>
+  <div class="container">
+    <div class="modules-grid reveal">
+      <div class="mod-cell mc-em">
+        <div class="mod-num">01 / Forma</div>
+        <div class="mod-icon mi-em">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="mod-title">Controle de Forma</div>
+        <div class="mod-desc">Gerencie todos os registros de fôrma com rastreabilidade completa por UF, pedido, quantidade e responsável.</div>
+        <div class="mod-fields">
+          <span class="mf-chip">Nome</span>
+          <span class="mf-chip">Pedido</span>
+          <span class="mf-chip">QTD</span>
+          <span class="mf-chip">UF</span>
+          <span class="mf-chip">Responsável</span>
+          <span class="mf-chip">Data</span>
+          <span class="mf-chip">PDFs</span>
+        </div>
+      </div>
+      <div class="mod-cell mc-b">
+        <div class="mod-num">02 / Argamassa</div>
+        <div class="mod-icon mi-b">
+          <svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+        </div>
+        <div class="mod-title">Controle de Argamassa</div>
+        <div class="mod-desc">Registro financeiro preciso de todos os fornecimentos de argamassa com valor, data e documentação PDF integrada.</div>
+        <div class="mod-fields">
+          <span class="mf-chip">Nome</span>
+          <span class="mf-chip">Valor R$</span>
+          <span class="mf-chip">Data</span>
+          <span class="mf-chip">PDFs</span>
+        </div>
+      </div>
+      <div class="mod-cell mc-p">
+        <div class="mod-num">03 / Projetos</div>
+        <div class="mod-icon mi-p">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
+        <div class="mod-title">Gestão de Projetos</div>
+        <div class="mod-desc">Carteira completa de obras e projetos com número de pedido, valores financeiros e controle documental.</div>
+        <div class="mod-fields">
+          <span class="mf-chip">Nome</span>
+          <span class="mf-chip">Nº Pedido</span>
+          <span class="mf-chip">Valor R$</span>
+          <span class="mf-chip">Data</span>
+          <span class="mf-chip">PDFs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ╔══ DASHBOARD PREVIEW ══╗ -->
+<section class="dashboard-sec" id="dashboard">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Dashboard</span>
+      <h2 class="section-title">Dados que<br>falam por si</h2>
+      <p class="section-sub">Visualize o desempenho das suas obras com gráficos interativos em tempo real.</p>
+    </div>
+
+    <div class="dash-frame reveal">
+      <div class="dash-bar">
+        <span class="dash-dot dd1"></span>
+        <span class="dash-dot dd2"></span>
+        <span class="dash-dot dd3"></span>
+        <div class="dash-url">app.taskgrid.com.br/dashboard</div>
+      </div>
+      <div class="dash-inner">
+        <div class="dash-sidebar">
+          <div class="ds-logo">
+            <div class="ds-logo-mark"></div>
+            <span class="ds-logo-name">TaskGrid</span>
+          </div>
+          <div class="ds-item on"><span class="dash-dot" style="background:var(--em);border-radius:2px"></span> Dashboard</div>
+          <div class="ds-item"><span class="dash-dot" style="background:var(--t3);border-radius:2px"></span> Planilhas</div>
+          <div class="ds-item"><span class="dash-dot" style="background:var(--t3);border-radius:2px"></span> Documentos</div>
+          <div class="ds-item"><span class="dash-dot" style="background:var(--t3);border-radius:2px"></span> Configurações</div>
+        </div>
+        <div class="dash-content">
+          <div class="dash-row">
+            <div class="dash-card dc-em">
+              <div class="dash-card-label">Total</div>
+              <div class="dash-card-val">147</div>
+            </div>
+            <div class="dash-card dc-b">
+              <div class="dash-card-label">Projetos R$</div>
+              <div class="dash-card-val">2.8M</div>
+            </div>
+            <div class="dash-card dc-p">
+              <div class="dash-card-label">QTD Forma</div>
+              <div class="dash-card-val">1.240</div>
+            </div>
+            <div class="dash-card dc-a">
+              <div class="dash-card-label">PDFs</div>
+              <div class="dash-card-val">89</div>
+            </div>
+          </div>
+          <div class="dash-chart-row">
+            <div class="dash-chart-card">
+              <div class="dcc-title">Registros por Módulo — Linha do Tempo</div>
+              <div class="dcc-bars">
+                <div class="dcc-bar b-em" style="height:45%"></div>
+                <div class="dcc-bar b-b" style="height:62%"></div>
+                <div class="dcc-bar b-em" style="height:38%"></div>
+                <div class="dcc-bar b-p" style="height:80%"></div>
+                <div class="dcc-bar b-b" style="height:55%"></div>
+                <div class="dcc-bar b-em" style="height:70%"></div>
+                <div class="dcc-bar b-p" style="height:90%"></div>
+                <div class="dcc-bar b-b" style="height:65%"></div>
+                <div class="dcc-bar b-em" style="height:48%"></div>
+                <div class="dcc-bar b-p" style="height:75%"></div>
+              </div>
+            </div>
+            <div class="dash-chart-card">
+              <div class="dcc-title">Proporção</div>
+              <div class="dcc-donut">
+                <svg width="90" height="90" viewBox="0 0 90 90">
+                  <circle cx="45" cy="45" r="34" stroke="rgba(0,229,190,.5)" stroke-dasharray="106 107" stroke-dashoffset="0" transform="rotate(-90 45 45)"/>
+                  <circle cx="45" cy="45" r="34" stroke="rgba(79,142,255,.5)" stroke-dasharray="72 141" stroke-dashoffset="-106" transform="rotate(-90 45 45)"/>
+                  <circle cx="45" cy="45" r="34" stroke="rgba(155,111,255,.5)" stroke-dasharray="35 178" stroke-dashoffset="-178" transform="rotate(-90 45 45)"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ╔══ METRICS BAND ══╗ -->
+<div class="metrics-band">
+  <div class="metrics-inner stagger">
+    <div class="mb-item">
+      <div class="mb-val">3<span>k</span>+</div>
+      <div class="mb-label">Obras gerenciadas</div>
+    </div>
+    <div class="mb-item">
+      <div class="mb-val">R$<span>180</span>M</div>
+      <div class="mb-label">Em carteira monitorada</div>
+    </div>
+    <div class="mb-item">
+      <div class="mb-val">99<span>%</span></div>
+      <div class="mb-label">Uptime garantido</div>
+    </div>
+    <div class="mb-item">
+      <div class="mb-val">40<span>x</span></div>
+      <div class="mb-label">Mais rápido que planilhas</div>
+    </div>
+  </div>
+</div>
+
+<!-- ╔══ TESTIMONIALS ══╗ -->
+<section class="testimonials" id="depoimentos">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Depoimentos</span>
+      <h2 class="section-title">Quem já usa,<br>não volta atrás</h2>
+    </div>
+  </div>
+  <div class="testi-scroll-wrap">
+    <div class="testi-track" id="testi-track">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Reduzi em 80% o tempo de preenchimento de relatórios. O dashboard me dá uma visão que antes eu levava dias para montar no Excel."</div>
+        <div class="testi-name">Carlos Menezes</div>
+        <div class="testi-role">Engenheiro de Obras, São Paulo</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Os PDFs integrados são o diferencial. Antes eu perdia horas procurando documentos. Agora tudo está vinculado ao registro certo."</div>
+        <div class="testi-name">Ana Paula Silva</div>
+        <div class="testi-role">Gestora de Contratos, RJ</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"O controle por UF na aba de Forma foi um divisor de águas. Agora consigo ver de onde vem cada peça e quem é o responsável."</div>
+        <div class="testi-name">Rafael Queiroz</div>
+        <div class="testi-role">Mestre de Obras, MG</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Interface incrível. A equipe toda adotou sem treinamento. O tema escuro é perfeito para quem trabalha em escritório o dia todo."</div>
+        <div class="testi-name">Fernanda Costa</div>
+        <div class="testi-role">Diretora Técnica, RS</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"O gráfico de linha do tempo me ajudou a identificar sazonalidade nas compras de argamassa. Economizei 22% no trimestre."</div>
+        <div class="testi-name">Marcos Vinícius</div>
+        <div class="testi-role">Comprador, Construtora Apex</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Centralizar Forma, Argamassa e Projetos num só sistema foi transformador. Antes usávamos 3 planilhas diferentes que nunca batiam."</div>
+        <div class="testi-name">Juliana Ramos</div>
+        <div class="testi-role">Coordenadora de Obra, BA</div>
+      </div>
+      <!-- duplicate for infinite scroll -->
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Reduzi em 80% o tempo de preenchimento de relatórios. O dashboard me dá uma visão que antes eu levava dias para montar no Excel."</div>
+        <div class="testi-name">Carlos Menezes</div>
+        <div class="testi-role">Engenheiro de Obras, São Paulo</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Os PDFs integrados são o diferencial. Antes eu perdia horas procurando documentos. Agora tudo está vinculado ao registro certo."</div>
+        <div class="testi-name">Ana Paula Silva</div>
+        <div class="testi-role">Gestora de Contratos, RJ</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"O controle por UF na aba de Forma foi um divisor de águas. Agora consigo ver de onde vem cada peça e quem é o responsável."</div>
+        <div class="testi-name">Rafael Queiroz</div>
+        <div class="testi-role">Mestre de Obras, MG</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Interface incrível. A equipe toda adotou sem treinamento. O tema escuro é perfeito para quem trabalha em escritório o dia todo."</div>
+        <div class="testi-name">Fernanda Costa</div>
+        <div class="testi-role">Diretora Técnica, RS</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"O gráfico de linha do tempo me ajudou a identificar sazonalidade nas compras de argamassa. Economizei 22% no trimestre."</div>
+        <div class="testi-name">Marcos Vinícius</div>
+        <div class="testi-role">Comprador, Construtora Apex</div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <div class="testi-text">"Centralizar Forma, Argamassa e Projetos num só sistema foi transformador. Antes usávamos 3 planilhas diferentes que nunca batiam."</div>
+        <div class="testi-name">Juliana Ramos</div>
+        <div class="testi-role">Coordenadora de Obra, BA</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ╔══ TECH STACK ══╗ -->
+<section class="stack-sec">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Tecnologia</span>
+      <h2 class="section-title">Construído com o<br>melhor da web</h2>
+      <p class="section-sub">Interface premium com performance máxima, sem dependências pesadas.</p>
+    </div>
+    <div class="stack-grid stagger">
+      <div class="stack-chip"><span class="chip-dot" style="background:#00e5be"></span> Geist Font</div>
+      <div class="stack-chip"><span class="chip-dot" style="background:#4f8eff"></span> Chart.js 4</div>
+      <div class="stack-chip"><span class="chip-dot" style="background:#ff5f56"></span> CSS Animations</div>
+      <div class="stack-chip"><span class="chip-dot" style="background:#febc2e"></span> Glassmorphism</div>
+      <div class="stack-chip"><span class="chip-dot" style="background:#28c840"></span> PDF Viewer</div>
+      <div class="stack-chip"><span class="chip-dot" style="background:#9b6fff"></span> Dark / Light Mode</div>
+      <div class="stack-chip"><span class="chip-dot" style="background:#f5a623"></span> Scroll Reveal</div>
+      <div class="stack-chip"><span class="chip-dot" style="background:#00e5be"></span> Zero Dependencies</div>
+    </div>
+  </div>
+</section>
+
+<!-- ╔══ CTA ══╗ -->
+<section class="cta-sec">
+  <div class="cta-bg"></div>
+  <div class="cta-rotate cta-rotate-1">
+    <svg viewBox="0 0 60 60" width="60" height="60">
+      <line x1="30" y1="0" x2="30" y2="60"/><line x1="0" y1="30" x2="60" y2="30"/>
+      <line x1="8" y1="8" x2="52" y2="52"/><line x1="52" y1="8" x2="8" y2="52"/>
+    </svg>
+  </div>
+  <div class="cta-rotate cta-rotate-2">
+    <svg viewBox="0 0 80 80" width="80" height="80">
+      <line x1="40" y1="0" x2="40" y2="80"/><line x1="0" y1="40" x2="80" y2="40"/>
+      <line x1="11" y1="11" x2="69" y2="69"/><line x1="69" y1="11" x2="11" y2="69"/>
+    </svg>
+  </div>
+
+  <div class="container">
+    <h2 class="cta-title reveal">
+      Pronto para<br><span style="background:linear-gradient(135deg,var(--em),#60e8ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">transformar</span><br>sua gestão?
+    </h2>
+    <p class="cta-sub reveal">Acesse agora mesmo. Sem cadastro. Sem cartão de crédito. Sem complicação.</p>
+    <div class="cta-actions">
+      <a class="btn-n btn-em btn-lg" href="TaskGrid.html">
+        <svg viewBox="0 0 24 24" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Abrir TaskGrid grátis
+      </a>
+      <a class="btn-n btn-ghost btn-lg" href="#funcionalidades">Conhecer mais</a>
+    </div>
+    <p class="cta-note">✓ 100% no navegador &nbsp;·&nbsp; ✓ Sem servidor &nbsp;·&nbsp; ✓ Seus dados ficam com você</p>
+  </div>
+</section>
+
+<!-- ╔══ FOOTER ══╗ -->
+<footer>
+  <div class="footer-inner">
+    <div class="foot-logo">
+      <div class="foot-mark">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>
+      </div>
+      <span class="foot-name">TaskGrid</span>
+    </div>
+    <div class="foot-links">
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#modulos">Módulos</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="TaskGrid.html">Acessar app</a>
+    </div>
+    <div class="foot-copy">© 2025 TaskGrid · Gestão de Obras</div>
+  </div>
+</footer>
+
+<script>
+// ── FLOATING DOTS ──
+;(function(){
+  const c = document.getElementById('float-dots');
+  for(let i = 0; i < 22; i++){
+    const d = document.createElement('div');
+    d.className = 'fdot';
+    const size = 2 + Math.random() * 3;
+    const colors = ['var(--em)', 'var(--blue)', 'var(--purple)'];
+    Object.assign(d.style, {
+      width: size + 'px', height: size + 'px',
+      left: Math.random() * 100 + '%',
+      bottom: -20 + 'px',
+      background: colors[Math.floor(Math.random() * colors.length)],
+      animationDuration: (12 + Math.random() * 18) + 's',
+      animationDelay: (Math.random() * 14) + 's',
+    });
+    c.appendChild(d);
+  }
+})();
+
+// ── SCROLL REVEAL ──
+;(function(){
+  const els = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .stagger');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(el => io.observe(el));
+})();
+
+// ── NAV SCROLL EFFECT ──
+;(function(){
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if(window.scrollY > 60) {
+      nav.style.background = 'rgba(5,5,8,.92)';
+      nav.style.borderBottomColor = 'rgba(255,255,255,.08)';
+    } else {
+      nav.style.background = 'rgba(5,5,8,.65)';
+      nav.style.borderBottomColor = 'rgba(255,255,255,.06)';
+    }
+  }, { passive: true });
+})();
+
+// ── SMOOTH ANCHOR SCROLL ──
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if(target){ e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+  });
+});
+
+// ── ANIMATED COUNTER ──
+;(function(){
+  function animateCounter(el, target, prefix='', suffix=''){
+    let start = 0;
+    const duration = 1800;
+    const step = timestamp => {
+      if(!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = prefix + Math.floor(eased * target).toLocaleString('pt-BR') + suffix;
+      if(progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  const metrics = [
+    { el: '.mb-item:nth-child(1) .mb-val', val: 3000, suffix: 'k+', prefix: '' },
+    { el: '.mb-item:nth-child(3) .mb-val', val: 99, suffix: '%', prefix: '' },
+  ];
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        const valEl = e.target.querySelector('.mb-val');
+        if(valEl && !valEl.dataset.animated){
+          valEl.dataset.animated = '1';
+          // just add class for CSS effect instead of breaking markup
+        }
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.mb-item').forEach(el => io.observe(el));
+})();
+</script>
+</body>
+</html>
